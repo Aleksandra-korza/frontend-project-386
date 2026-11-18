@@ -1,10 +1,16 @@
 # Версии инструментов и задачи проекта. Документация: https://mise.jdx.dev/
 # Версии согласованы с .nvmrc (24), engines.node (^24) и packageManager (pnpm@12.21.0).
 
+[settings]
+# Фоновые процессы ([daemons]) — экспериментальная функция mise.
+experimental = true
+
 [tools]
 node = "24"
 pnpm = "12.21.0"
 hk = "2.13.0"
+# Супервизор daemons (https://pitchfork.jdx.dev/); mise требует >= 2.25.0.
+pitchfork = "2.35.0"
 
 [env]
 # hk по умолчанию прячет в stash и неотслеживаемые файлы на время pre-commit.
@@ -43,3 +49,19 @@ run = [
 [tasks.build]
 description = "Собрать backend и frontend"
 run = "pnpm build"
+
+# Фоновые dev-серверы под управлением pitchfork:
+#   mise daemons start | stop | restart | status | logs
+# `port` — pitchfork проверяет, что порт свободен, до запуска.
+[daemons.backend]
+run = "exec pnpm dev:backend"
+port = 4000
+ready_http = { url = "http://127.0.0.1:4000/api/health", timeout = "60s" }
+
+[daemons.frontend]
+# --strictPort: если 5173 занят, Vite завершится с ошибкой, а не уйдёт на другой порт.
+run = "exec pnpm dev:frontend --strictPort"
+port = 5173
+ready_http = { url = "http://localhost:5173/", timeout = "60s" }
+# Прокси /api во frontend ведёт на backend.
+depends = ["backend"]
