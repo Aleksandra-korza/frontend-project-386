@@ -1,0 +1,26 @@
+# Зависимости и артефакты сборки (дополнительно к .gitignore, который Prettier читает сам)
+node_modules/
+**/dist/
+coverage/
+.vitest/
+*.tsbuildinfo
+
+# Lock-файл генерируется pnpm
+pnpm-lock.yaml
+
+# Сгенерированный файл Hexlet — изменять запрещено
+.github/workflows/hexlet-check.yml
+
+# Изображения-референсы
+docs/reference/
+
+
+# Существующая документация сохраняет исходное ручное форматирование.
+# Новые Markdown-файлы в docs/ и apps/ форматируются Prettier.
+docs/task.md
+docs/requirements.md
+docs/stack-research.md
+
+# Markdown в корне репозитория не форматируется (в т. ч. README.md).
+# Чтобы включить форматирование конкретного файла, добавьте исключение: !/ИМЯ.md
+/*.md

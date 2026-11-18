@@ -1,0 +1,45 @@
+# Версии инструментов и задачи проекта. Документация: https://mise.jdx.dev/
+# Версии согласованы с .nvmrc (24), engines.node (^24) и packageManager (pnpm@12.21.0).
+
+[tools]
+node = "24"
+pnpm = "12.21.0"
+hk = "2.13.0"
+
+[env]
+# hk по умолчанию прячет в stash и неотслеживаемые файлы на время pre-commit.
+# Отключаем: hk не трогает файлы, которых нет в Git. Хуки запускаются через
+# `mise x` (hk install --mise), поэтому переменная действует в каждом хуке.
+HK_STASH_UNTRACKED = "0"
+
+[tasks.install-deps]
+description = "Установить зависимости строго по pnpm-lock.yaml (без Git-хуков; так в CI)"
+run = "pnpm install --frozen-lockfile"
+
+[tasks.install]
+description = "Локальная установка: зависимости (install-deps) и Git-хуки (hk)"
+depends = ["install-deps"]
+run = "hk install --mise"
+
+[tasks.dev-frontend]
+description = "Запустить frontend (@calendar/frontend, Vite) в режиме разработки"
+run = "pnpm dev:frontend"
+raw = true
+
+[tasks.dev-backend]
+description = "Запустить backend (@calendar/backend, Fastify) в режиме разработки"
+run = "pnpm dev:backend"
+raw = true
+
+[tasks.check]
+description = "Линтер, форматирование, типы и тесты — по очереди, до первой ошибки"
+run = [
+  "pnpm lint",
+  "pnpm format:check",
+  "pnpm typecheck",
+  "pnpm test",
+]
+
+[tasks.build]
+description = "Собрать backend и frontend"
+run = "pnpm build"
