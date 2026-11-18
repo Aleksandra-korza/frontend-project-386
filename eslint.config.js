@@ -11,7 +11,13 @@ import tseslint from 'typescript-eslint'
 // в корневом package.json пакет `typescript` — алиас на @typescript/typescript6
 // (рецепт из анонса TypeScript 7.0). Сборка и typecheck в apps/* используют TS 7.
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/coverage/', '**/.vitest/']),
+  globalIgnores([
+    '**/dist/',
+    '**/coverage/',
+    '**/.vitest/',
+    // Сгенерированный SDK (mise run codegen) — не редактируется вручную.
+    'apps/frontend/src/client/',
+  ]),
 
   {
     name: 'project/base',

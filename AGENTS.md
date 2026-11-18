@@ -8,6 +8,7 @@ pnpm-монорепозиторий (`apps/*`):
 
 - `apps/backend` — API на Fastify + TypeScript, все маршруты под `/api`. Фабрика приложения `src/app.ts` (`buildApp()`), запуск сервера `src/server.ts`.
 - `apps/frontend` — React + Vite + TypeScript, Tailwind CSS 4, shadcn/ui. В dev-режиме `/api` проксируется на backend.
+- `api/` — контракт API на TypeSpec (`main.tsp`). Из него генерируются OpenAPI (`api/generated/openapi.json`) и клиентский SDK frontend (`apps/frontend/src/client`, генератор `@hey-api/openapi-ts`).
 - `docs/` — требования, ТЗ, исследование стека, макеты.
 
 ## Окружение и установка
@@ -38,9 +39,12 @@ mise daemons stop
 ## Проверки и сборка
 
 ```sh
+mise run codegen        # TypeSpec → OpenAPI → SDK frontend
 mise run check          # pnpm lint → format:check → typecheck → test (до первой ошибки)
 mise run build          # сборка backend и frontend
 ```
+
+API меняется через `api/main.tsp`, затем `mise run codegen`. Файлы в `api/generated/` и `apps/frontend/src/client/` генерируются и хранятся в Git — не редактируйте их вручную; CI проверяет, что после `mise run codegen` в них нет изменений. Backend реализует маршруты вручную, соответствие контракту проверяет `apps/backend/src/contract.test.ts`.
 
 Отдельно: `pnpm lint`, `pnpm format`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm test:watch` (через `mise exec --`). Один тест или пакет:
 

@@ -37,6 +37,19 @@ jobs:
       - name: Install dependencies
         run: mise run install-deps
 
+      # OpenAPI и SDK хранятся в Git: после генерации не должно быть изменений
+      # и новых файлов, иначе сгенерированный код устарел или правился вручную.
+      - name: Check generated code is up to date
+        run: |
+          mise run codegen
+          git diff --exit-code
+          UNTRACKED=$(git status --porcelain --untracked-files=all -- api/generated apps/frontend/src/client)
+          if [ -n "$UNTRACKED" ]; then
+            echo "::error title=codegen::Новые сгенерированные файлы не закоммичены:"
+            echo "$UNTRACKED"
+            exit 1
+          fi
+
       - name: Check
         run: mise run check
 

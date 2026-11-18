@@ -24,3 +24,7 @@ docs/stack-research.md
 # Markdown в корне репозитория не форматируется (в т. ч. README.md).
 # Чтобы включить форматирование конкретного файла, добавьте исключение: !/ИМЯ.md
 /*.md
+
+# Сгенерированные файлы (mise run codegen): OpenAPI и SDK frontend
+api/generated/
+apps/frontend/src/client/

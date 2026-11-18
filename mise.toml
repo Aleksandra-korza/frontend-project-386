@@ -50,6 +50,13 @@ run = [
 description = "Собрать backend и frontend"
 run = "pnpm build"
 
+[tasks.codegen]
+description = "TypeSpec (api/) → OpenAPI (api/generated) → SDK frontend (apps/frontend/src/client)"
+run = [
+  "pnpm exec tsp compile api",
+  "pnpm exec openapi-ts",
+]
+
 # Фоновые dev-серверы под управлением pitchfork:
 #   mise daemons start | stop | restart | status | logs
 # `port` — pitchfork проверяет, что порт свободен, до запуска.

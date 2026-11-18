@@ -1,0 +1,9 @@
+# TypeSpec → OpenAPI. Документация: https://typespec.io/docs/emitters/openapi3/reference/emitter/
+warn-as-error: true
+emit:
+  - '@typespec/openapi3'
+options:
+  '@typespec/openapi3':
+    # OpenAPI 3.0.0 (по умолчанию); JSON — без отдельного YAML-парсера в тестах.
+    emitter-output-dir: '{project-root}/generated'
+    output-file: openapi.json
