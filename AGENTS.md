@@ -65,3 +65,17 @@ mise exec -- pnpm test --project @calendar/backend
 - В корне могут быть личные неотслеживаемые файлы: не добавлять их в Git. Добавляйте в индекс явные пути, не `git add .` / `git add -A`.
 - Порты фиксированы: backend 4000, frontend 5173.
 - В корневом `package.json` пакет `typescript` — алиас на TypeScript 6 только для ESLint (typescript-eslint не поддерживает TS 7); приложения собираются TypeScript 7. Не менять.
+
+## Agent skills
+
+### Issue tracker
+
+Задачи и спецификации ведутся в GitHub Issues репозитория (CLI `gh`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Пять канонических триаж-меток по умолчанию: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: один `GLOSSARY.md` и `docs/adr/` в корне (создаются по мере необходимости). See `docs/agents/domain.md`.
