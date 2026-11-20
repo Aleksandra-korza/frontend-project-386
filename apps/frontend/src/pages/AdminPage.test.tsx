@@ -11,7 +11,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { routes } from '@/router'
 import { stubFetch } from '@/testing/fetch'
 
-// «Раздел владельца» /admin, секция «Типы встреч» (docs/specs/booking.md §6.2, §6.3).
+// «Раздел владельца» /admin: секции «Предстоящие бронирования» и «Типы встреч»
+// (docs/specs/booking.md §6.2, §6.3).
 const renderAdminPage = () =>
   render(
     <RouterProvider
@@ -31,15 +32,29 @@ type MeetingType = {
   durationMinutes: number
 }
 
+type UpcomingBooking = {
+  id: string
+  meetingTypeId: string
+  meetingTypeTitle: string
+  startsAt: string
+  endsAt: string
+  guestName: string
+  guestEmail: string
+  createdAt: string
+}
+
 // Backend в памяти теста: GET отдаёт список, POST отвечает переданной функцией.
+// Предстоящих бронирований нет, если не переданы.
 function stubMeetingTypesApi(
   initial: MeetingType[],
   onCreate: (body: Record<string, unknown>) => Response = (body) =>
     Response.json(body, { status: 201 }),
+  bookings: UpcomingBooking[] = [],
 ) {
   const meetingTypes = [...initial]
   const created: Record<string, unknown>[] = []
   stubFetch({
+    '/api/bookings': () => Response.json(bookings),
     '/api/meeting-types': async (request) => {
       if (request.method !== 'POST') return Response.json(meetingTypes)
       const body = (await request.json()) as Record<string, unknown>
@@ -52,12 +67,15 @@ function stubMeetingTypesApi(
   return { created }
 }
 
-const section = async () =>
+const sectionTitled = async (name: string) =>
   within(
-    (
-      await screen.findByRole('heading', { level: 2, name: 'Типы встреч' })
-    ).closest('section')!,
+    (await screen.findByRole('heading', { level: 2, name })).closest(
+      'section',
+    )!,
   )
+
+const section = () => sectionTitled('Типы встреч')
+const bookingsSection = () => sectionTitled('Предстоящие бронирования')
 
 function fillForm(fields: {
   id?: string
@@ -294,6 +312,7 @@ describe('раздел владельца: типы встреч', () => {
   test('блокирует кнопку на время отправки', async () => {
     let respond: ((response: Response) => void) | undefined
     stubFetch({
+      '/api/bookings': () => Response.json([]),
       '/api/meeting-types': (request) =>
         request.method === 'POST'
           ? new Promise<Response>((resolve) => {
@@ -339,5 +358,103 @@ describe('раздел владельца: типы встреч', () => {
         .map((link) => link.getAttribute('href'))
         .filter((href) => href?.startsWith('/admin')),
     ).toEqual([])
+  })
+})
+
+describe('раздел владельца: предстоящие бронирования', () => {
+  const booking = (
+    overrides: Partial<UpcomingBooking> &
+      Pick<UpcomingBooking, 'id' | 'startsAt' | 'endsAt'>,
+  ): UpcomingBooking => ({
+    meetingTypeId: 'intro-call',
+    meetingTypeTitle: 'Знакомство',
+    guestName: 'Анна',
+    guestEmail: 'anna@example.com',
+    createdAt: '2026-11-20T15:00:00+01:00',
+    ...overrides,
+  })
+
+  test('секция бронирований — перед типами встреч, часовой пояс в заголовке', async () => {
+    stubMeetingTypesApi([])
+
+    renderAdminPage()
+
+    await bookingsSection()
+    const headings = screen
+      .getAllByRole('heading', { level: 2 })
+      .map((heading) => heading.textContent)
+    expect(headings).toEqual(['Предстоящие бронирования', 'Типы встреч'])
+    const header = within(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Предстоящие бронирования',
+      }).parentElement!,
+    )
+    header.getByText('Europe/Warsaw')
+  })
+
+  test('без бронирований сообщает, что их нет', async () => {
+    stubMeetingTypesApi([])
+
+    renderAdminPage()
+
+    ;(await bookingsSection()).getByText('Предстоящих бронирований нет')
+  })
+
+  test('группирует бронирования по дням в порядке ответа', async () => {
+    stubMeetingTypesApi([], undefined, [
+      booking({
+        id: 'b1',
+        startsAt: '2026-11-21T10:00:00+01:00',
+        endsAt: '2026-11-21T11:00:00+01:00',
+        meetingTypeId: 'consultation',
+        meetingTypeTitle: 'Консультация',
+        guestName: 'Борис',
+        guestEmail: 'boris@example.com',
+        createdAt: '2026-11-19T09:05:00+01:00',
+      }),
+      booking({
+        id: 'b2',
+        startsAt: '2026-11-21T11:00:00+01:00',
+        endsAt: '2026-11-21T11:30:00+01:00',
+      }),
+      // Момент в UTC показывается по Варшаве: 23 ноября, 09:30–10:00.
+      booking({
+        id: 'b3',
+        startsAt: '2026-11-23T08:30:00Z',
+        endsAt: '2026-11-23T09:00:00Z',
+        guestName: 'Вера',
+        guestEmail: 'vera@example.com',
+      }),
+    ])
+
+    renderAdminPage()
+
+    const bookings = await bookingsSection()
+    const days = bookings.getAllByRole('heading', { level: 3 })
+    expect(days.map((day) => day.textContent)).toEqual([
+      'Суббота, 21 ноября',
+      'Понедельник, 23 ноября',
+    ])
+    const itemsOf = (day: HTMLElement) =>
+      within(day.closest('li')!)
+        .getAllByRole('listitem')
+        .map((item) => within(item))
+    const [saturday, monday] = days.map(itemsOf)
+    expect(saturday).toHaveLength(2)
+    expect(monday).toHaveLength(1)
+    const [first, second] = saturday
+    first.getByText('10:00–11:00')
+    first.getByText('Консультация')
+    first.getByText('Борис')
+    first.getByText('boris@example.com')
+    first.getByText('Создано: 19.11.2026, 09:05')
+    second.getByText('11:00–11:30')
+    second.getByText('Знакомство')
+    const [third] = monday
+    third.getByText('09:30–10:00')
+    third.getByText('Вера')
+    third.getByText('vera@example.com')
+    third.getByText('Создано: 20.11.2026, 15:00')
   })
 })

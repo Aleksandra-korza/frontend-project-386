@@ -1,8 +1,16 @@
 import { useEffect, useRef } from 'react'
+import { Temporal } from 'temporal-polyfill'
 import { Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { controlClass, Field } from '@/components/FormField'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  formatDateTime,
+  formatDayTitle,
+  formatTime,
+  localDate,
+  TIME_ZONE,
+} from '@/lib/dates'
 import { formatDuration } from '@/lib/duration'
 import { fieldErrorMessage, MEETING_TYPE_ID_HINT } from '@/lib/fieldErrors'
 import type { adminLoader } from './adminLoader'
@@ -106,9 +114,74 @@ function CreateMeetingTypeForm() {
   )
 }
 
-// «Раздел владельца»: типы встреч — список и форма создания (docs/specs/booking.md §6.2).
+type UpcomingBooking = Awaited<
+  ReturnType<typeof adminLoader>
+>['bookings'][number]
+
+// Предстоящие бронирования всех типов, сгруппированные по местным дням.
+// Порядок — из ответа API (по возрастанию начала); без автообновления.
+function UpcomingBookings({ bookings }: { bookings: UpcomingBooking[] }) {
+  const days = new Map<string, UpcomingBooking[]>()
+  for (const booking of bookings) {
+    const date = localDate(booking.startsAt, TIME_ZONE).toString()
+    days.set(date, [...(days.get(date) ?? []), booking])
+  }
+  const time = (dateTime: string) => formatTime(dateTime, TIME_ZONE)
+
+  return (
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Предстоящие бронирования
+        </h2>
+        <span className="text-sm text-muted-foreground">{TIME_ZONE}</span>
+      </div>
+      {days.size === 0 ? (
+        <p className="text-muted-foreground">Предстоящих бронирований нет</p>
+      ) : (
+        <ul className="flex flex-col gap-6">
+          {[...days].map(([date, dayBookings]) => (
+            <li key={date} className="flex flex-col gap-3">
+              <h3 className="text-lg font-medium">
+                {formatDayTitle(Temporal.PlainDate.from(date))}
+              </h3>
+              <ul className="flex flex-col gap-3">
+                {dayBookings.map((booking) => (
+                  <li key={booking.id}>
+                    <Card className="bg-background/80">
+                      <CardContent className="flex flex-col gap-1">
+                        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <span className="font-medium tabular-nums">
+                            {`${time(booking.startsAt)}–${time(booking.endsAt)}`}
+                          </span>
+                          <span>{booking.meetingTypeTitle}</span>
+                        </p>
+                        <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                          <span>{booking.guestName}</span>
+                          <span className="text-muted-foreground">
+                            {booking.guestEmail}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {`Создано: ${formatDateTime(booking.createdAt, TIME_ZONE)}`}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+// «Раздел владельца»: предстоящие бронирования, затем типы встреч — список
+// и форма создания (docs/specs/booking.md §6.2).
 function AdminPage() {
-  const { meetingTypes } = useLoaderData<typeof adminLoader>()
+  const { bookings, meetingTypes } = useLoaderData<typeof adminLoader>()
 
   return (
     <>
@@ -117,6 +190,7 @@ function AdminPage() {
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Раздел владельца
         </h1>
+        <UpcomingBookings bookings={bookings} />
         <section className="flex flex-col gap-6">
           <h2 className="text-2xl font-semibold tracking-tight">Типы встреч</h2>
           {meetingTypes.length === 0 ? (

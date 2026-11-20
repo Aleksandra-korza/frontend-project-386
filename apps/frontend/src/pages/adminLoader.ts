@@ -1,8 +1,11 @@
-import { listMeetingTypes } from '@/client'
+import { listMeetingTypes, listUpcomingBookings } from '@/client'
 
 // Данные «Раздела владельца» /admin (docs/specs/booking.md §6.2).
 // Ошибка запроса уходит в ErrorBoundary маршрута.
 export async function adminLoader() {
-  const { data: meetingTypes } = await listMeetingTypes({ throwOnError: true })
-  return { meetingTypes }
+  const [{ data: bookings }, { data: meetingTypes }] = await Promise.all([
+    listUpcomingBookings({ throwOnError: true }),
+    listMeetingTypes({ throwOnError: true }),
+  ])
+  return { bookings, meetingTypes }
 }

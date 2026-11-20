@@ -3,6 +3,12 @@ import { Temporal } from 'temporal-polyfill'
 // Даты и время в интерфейсе (ADR-0004). Строки — из ответа API: день `YYYY-MM-DD`,
 // время — ISO 8601 со смещением; показываются в часовом поясе из ответа.
 
+/**
+ * Часовой пояс сервиса (BR-03). Списки без поля `timeZone` в ответе API
+ * (предстоящие бронирования) показываются в нём.
+ */
+export const TIME_ZONE = 'Europe/Warsaw'
+
 const MONTHS = [
   'Январь',
   'Февраль',
@@ -58,12 +64,25 @@ export const formatDayMonth = (date: Temporal.PlainDate) =>
 export const formatDay = (date: Temporal.PlainDate) =>
   `${WEEKDAYS[date.dayOfWeek - 1] ?? ''}, ${formatDayMonth(date)}`
 
+/** «Понедельник, 23 ноября» — заголовок дня. */
+export const formatDayTitle = (date: Temporal.PlainDate) => {
+  const day = formatDay(date)
+  return day.charAt(0).toUpperCase() + day.slice(1)
+}
+
 /** «10:30» — время момента `dateTime` в поясе `timeZone`. */
 export const formatTime = (dateTime: string, timeZone: string) =>
   Temporal.Instant.from(dateTime)
     .toZonedDateTimeISO(timeZone)
     .toPlainTime()
     .toString({ smallestUnit: 'minute' })
+
+/** «20.11.2026, 15:00» — дата и время момента `dateTime` в поясе `timeZone`. */
+export function formatDateTime(dateTime: string, timeZone: string) {
+  const local = Temporal.Instant.from(dateTime).toZonedDateTimeISO(timeZone)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${pad(local.day)}.${pad(local.month)}.${String(local.year)}, ${formatTime(dateTime, timeZone)}`
+}
 
 /** Местный день момента `dateTime` в поясе `timeZone`. */
 export const localDate = (dateTime: string, timeZone: string) =>
