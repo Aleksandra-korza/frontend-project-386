@@ -1,0 +1,48 @@
+// Git-хуки проекта. Документация: https://hk.jdx.dev/
+// Правила берутся из конфигов проекта (eslint.config.js, .prettierrc,
+// .prettierignore, commitlint.config.js); полный набор проверок — `mise run check`.
+amends "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Config.pkl"
+
+hooks {
+  // Только staged-файлы. Непроиндексированные изменения отслеживаемых файлов
+  // hk прячет в stash и возвращает после хука; неотслеживаемые файлы не трогает
+  // (HK_STASH_UNTRACKED=0 в mise.toml).
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ["eslint"] {
+        glob = List("**/*.js", "**/*.ts", "**/*.tsx")
+        batch = true
+        check = new Command { argv = List("pnpm", "exec", "eslint", "--no-warn-ignored", "{{files}}") }
+        fix = new Command { argv = List("pnpm", "exec", "eslint", "--no-warn-ignored", "--fix", "{{files}}") }
+      }
+      ["prettier"] {
+        glob = List("**/*.js", "**/*.ts", "**/*.tsx", "**/*.json", "**/*.css", "**/*.md", "**/*.yml", "**/*.yaml")
+        batch = true
+        // Файлы из .prettierignore Prettier пропускает, даже если они переданы явно.
+        check = new Command { argv = List("pnpm", "exec", "prettier", "--check", "--ignore-unknown", "{{files}}") }
+        fix = new Command { argv = List("pnpm", "exec", "prettier", "--write", "--ignore-unknown", "{{files}}") }
+        // ESLint --fix и Prettier не должны писать в один файл одновременно.
+        depends = "eslint"
+      }
+    }
+  }
+
+  ["commit-msg"] {
+    steps {
+      ["commitlint"] {
+        check = new Command { argv = List("pnpm", "exec", "commitlint", "--edit", "{{commit_msg_file}}") }
+      }
+    }
+  }
+
+  // Полная проверка проекта — та же команда, что и вручную/в CI.
+  ["pre-push"] {
+    steps {
+      ["check"] {
+        check = "mise run check"
+      }
+    }
+  }
+}

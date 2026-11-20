@@ -1,0 +1,21 @@
+{
+  "name": "@calendar/backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "fastify": "^5.12.8",
+    "temporal-polyfill": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "ajv": "8.20.0",
+    "typescript": "~7.0.2"
+  }
+}
