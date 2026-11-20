@@ -10,10 +10,13 @@ import type { chooseSlotLoader } from './chooseSlotLoader'
 import type { BackToDayReason } from './createBookingAction'
 
 // Сообщение после возврата с подтверждения (?error=, docs/specs/booking.md §6.3).
-const BACK_TO_DAY_MESSAGES: Partial<Record<string, string>> = {
+const BACK_TO_DAY_MESSAGES: Record<BackToDayReason, string> = {
   SLOT_TAKEN: 'Это время уже заняли. Выберите другое.',
   INVALID_SLOT: 'Это время недоступно для записи. Выберите другое.',
-} satisfies Record<BackToDayReason, string>
+}
+
+const isBackToDayReason = (value: string | null): value is BackToDayReason =>
+  value !== null && Object.hasOwn(BACK_TO_DAY_MESSAGES, value)
 
 // Выбор дня и времени (docs/specs/booking.md §6.1). Слоты и их занятость считает
 // сервер; клиент только считает свободные слоты дня (ADR-0004, п. 3).
@@ -43,7 +46,10 @@ function ChooseSlotPage() {
   )
 
   const time = (dateTime: string) => formatTime(dateTime, timeZone)
-  const backToDayMessage = BACK_TO_DAY_MESSAGES[searchParams.get('error') ?? '']
+  const backToDayReason = searchParams.get('error')
+  const backToDayMessage = isBackToDayReason(backToDayReason)
+    ? BACK_TO_DAY_MESSAGES[backToDayReason]
+    : undefined
 
   return (
     <>

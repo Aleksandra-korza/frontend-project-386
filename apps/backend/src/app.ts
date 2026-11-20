@@ -39,6 +39,9 @@ import {
 } from './meeting-types.ts'
 import { createStore, type Store } from './store.ts'
 
+/** Слот по началу `startsAt` или код ошибки поля `startsAt`. */
+type SlotLookup = { ok: true; slot: Slot } | { ok: false; code: FieldErrorCode }
+
 export type AppOptions = FastifyServerOptions & {
   /** Хранилище данных; по умолчанию — пустое. */
   store?: Store
@@ -205,22 +208,23 @@ export function buildApp({
         request.validationError?.validation as
           FastifySchemaValidationError[] | undefined,
       )
-      const slot =
+      const found =
         meetingType &&
         typeof body?.startsAt === 'string' &&
         !schemaErrors.some(({ field }) => field === 'startsAt')
           ? slotStartingAt(meetingType.durationMinutes, body.startsAt)
           : undefined
       const slotErrors: FieldError[] =
-        typeof slot === 'string' ? [{ field: 'startsAt', code: slot }] : []
+        found?.ok === false ? [{ field: 'startsAt', code: found.code }] : []
       const fieldErrors = mergeFieldErrors(schemaErrors, slotErrors)
       if (
         request.validationError ||
         fieldErrors.length > 0 ||
-        typeof slot !== 'object'
+        found?.ok !== true
       ) {
         throw validationError(fieldErrors)
       }
+      const { slot } = found
 
       const booking: Booking = {
         id: randomUUID(),
@@ -248,14 +252,15 @@ export function buildApp({
   function slotStartingAt(
     durationMinutes: number,
     startsAt: string,
-  ): Slot | FieldErrorCode {
+  ): SlotLookup {
     let instant: Temporal.Instant
     try {
       instant = Temporal.Instant.from(startsAt)
     } catch {
-      return 'INVALID_FORMAT'
+      return { ok: false, code: 'INVALID_FORMAT' }
     }
-    return findSlot(durationMinutes, now(), instant) ?? 'INVALID_SLOT'
+    const slot = findSlot(durationMinutes, now(), instant)
+    return slot ? { ok: true, slot } : { ok: false, code: 'INVALID_SLOT' }
   }
 
   return app
