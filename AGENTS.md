@@ -60,6 +60,8 @@ mise exec -- pnpm test --project @calendar/backend
 
 Сообщения коммитов — [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): subject`, например `feat: add booking calendar`, `fix: handle empty slots`. Правила — `commitlint.config.js` (`@commitlint/config-conventional`); их проверяют Git-хук `commit-msg` и CI. Хук `pre-push` запускает `mise run check`.
 
+Каждый коммит реализации ссылается на GitHub Issue, который он закрывает или реализует: номер задачи в скобках в конце заголовка, например `feat: implement meeting type creation (#19)`.
+
 ## Ограничения
 
 - `.github/workflows/hexlet-check.yml` — служебный workflow Hexlet: не изменять, не удалять, не переименовывать.
