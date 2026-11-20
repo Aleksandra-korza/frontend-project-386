@@ -1,5 +1,10 @@
-import { redirect, type ActionFunctionArgs } from 'react-router'
-import { type Booking, createBooking, type FieldErrorCode } from '@/client'
+import { data, redirect, type ActionFunctionArgs } from 'react-router'
+import {
+  type Booking,
+  createBooking,
+  type ErrorResponse,
+  type FieldErrorCode,
+} from '@/client'
 
 export type CreateBookingResult =
   | { status: 'booked'; booking: Booking }
@@ -14,6 +19,7 @@ export type BackToDayReason = 'SLOT_TAKEN' | 'INVALID_SLOT'
 // Создание бронирования из формы подтверждения (docs/specs/booking.md §6.1).
 // Проверку полей выполняет сервер. При SLOT_TAKEN и ошибке startsAt гость
 // возвращается к выбору того же дня: его loader заново загружает доступность.
+// MEETING_TYPE_NOT_FOUND — ответ 404 маршрута, как у loader (RouteError, §6.3).
 export async function createBookingAction({
   request,
   params,
@@ -36,8 +42,9 @@ export async function createBookingAction({
     )
   }
 
+  let error: ErrorResponse | undefined
   try {
-    const { data, error, response } = await createBooking({
+    const result = await createBooking({
       body: {
         meetingTypeId,
         startsAt,
@@ -45,22 +52,32 @@ export async function createBookingAction({
         guestEmail: text('guestEmail'),
       },
     })
-    if (response?.ok && data) return { status: 'booked', booking: data }
-    if (error?.code === 'SLOT_TAKEN') return backToDay('SLOT_TAKEN')
-    if (error?.code === 'VALIDATION_ERROR' && error.fieldErrors?.length) {
-      // startsAt гость на этой странице не вводит: любая его ошибка — время недоступно.
-      if (error.fieldErrors.some(({ field }) => field === 'startsAt')) {
-        return backToDay('INVALID_SLOT')
-      }
-      return {
-        status: 'invalid',
-        fieldErrors: Object.fromEntries(
-          error.fieldErrors.map(({ field, code }) => [field, code]),
-        ),
-      }
+    if (result.response?.ok && result.data) {
+      return { status: 'booked', booking: result.data }
     }
+    error = result.error
   } catch {
     // Сетевая ошибка — то же сообщение, что и для 5xx.
+    return { status: 'failed' }
+  }
+
+  if (error?.code === 'MEETING_TYPE_NOT_FOUND') {
+    // Тип удалён после загрузки страницы: тот же экран, что и у loader.
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- ответ маршрута React Router
+    throw data('Meeting type not found', { status: 404 })
+  }
+  if (error?.code === 'SLOT_TAKEN') return backToDay('SLOT_TAKEN')
+  if (error?.code === 'VALIDATION_ERROR' && error.fieldErrors?.length) {
+    // startsAt гость на этой странице не вводит: любая его ошибка — время недоступно.
+    if (error.fieldErrors.some(({ field }) => field === 'startsAt')) {
+      return backToDay('INVALID_SLOT')
+    }
+    return {
+      status: 'invalid',
+      fieldErrors: Object.fromEntries(
+        error.fieldErrors.map(({ field, code }) => [field, code]),
+      ),
+    }
   }
   return { status: 'failed' }
 }

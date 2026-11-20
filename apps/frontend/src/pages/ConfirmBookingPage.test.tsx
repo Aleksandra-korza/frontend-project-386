@@ -238,6 +238,21 @@ describe('подтверждение бронирования', () => {
     expect(router.state.location.pathname).toBe('/book/intro-call')
   })
 
+  test('MEETING_TYPE_NOT_FOUND — «Тип встречи не найден» и ссылка «К каталогу»', async () => {
+    stubApi(() => errorResponse(404, { code: 'MEETING_TYPE_NOT_FOUND' }))
+
+    renderAt(confirmPath)
+    await fillAndSubmit()
+
+    await screen.findByText('Тип встречи не найден')
+    expect(
+      screen.getByRole('link', { name: 'К каталогу' }).getAttribute('href'),
+    ).toBe('/book')
+    expect(
+      screen.queryByText('Не удалось отправить. Попробуйте ещё раз.'),
+    ).toBe(null)
+  })
+
   test('сеть или 5xx — «Не удалось отправить. Попробуйте ещё раз.»', async () => {
     stubApi(() => Response.json({}, { status: 500 }))
 
