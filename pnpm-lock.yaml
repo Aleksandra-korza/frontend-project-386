@@ -232,6 +232,9 @@ importers:
       fastify:
         specifier: ^5.12.8
         version: 5.12.8
+      temporal-polyfill:
+        specifier: ^1.0.8
+        version: 1.0.8
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
@@ -278,6 +281,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.5
         version: 4.3.5
+      temporal-polyfill:
+        specifier: ^1.0.8
+        version: 1.0.8
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0

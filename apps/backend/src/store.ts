@@ -5,6 +5,8 @@ import type { MeetingType } from './generated/index.ts'
 export type Store = {
   /** Типы встреч в порядке создания, старые первыми. */
   listMeetingTypes(): MeetingType[]
+  /** Тип встречи по идентификатору или undefined. */
+  getMeetingType(id: string): MeetingType | undefined
 }
 
 export function createStore(
@@ -15,5 +17,9 @@ export function createStore(
   return {
     listMeetingTypes: () =>
       meetingTypes.map((meetingType) => ({ ...meetingType })),
+    getMeetingType: (id) => {
+      const meetingType = meetingTypes.find((candidate) => candidate.id === id)
+      return meetingType && { ...meetingType }
+    },
   }
 }

@@ -16,6 +16,13 @@ ajv.addFormat('int32', {
   type: 'number',
   validate: (value) => Number.isInteger(value) && Math.abs(value) < 2 ** 31,
 })
+// Форматы дат OpenAPI: день `YYYY-MM-DD` и дата-время ISO 8601 обязательно со смещением
+// (docs/specs/booking.md §2, ADR-0004).
+ajv.addFormat('date', /^\d{4}-\d{2}-\d{2}$/)
+ajv.addFormat(
+  'date-time',
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
+)
 ajv.addSchema(openapi, 'openapi')
 const responseSchemaRef = (path: string, method: string, status: string) =>
   `openapi#/paths/${path.replaceAll('/', '~1')}/${method}/responses/${status}/content/application~1json/schema`
@@ -63,4 +70,41 @@ describe('контракт OpenAPI', () => {
     expect(body).toHaveLength(2)
     expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
   })
+
+  test.each([
+    {
+      url: '/api/meeting-types/intro-call',
+      path: '/api/meeting-types/{id}',
+      status: 200,
+    },
+    {
+      url: '/api/meeting-types/unknown',
+      path: '/api/meeting-types/{id}',
+      status: 404,
+    },
+    {
+      url: '/api/meeting-types/intro-call/availability',
+      path: '/api/meeting-types/{id}/availability',
+      status: 200,
+    },
+    {
+      url: '/api/meeting-types/unknown/availability',
+      path: '/api/meeting-types/{id}/availability',
+      status: 404,
+    },
+  ])(
+    'GET $url ($status) соответствует контракту',
+    async ({ url, path, status }) => {
+      const validate = ajv.compile({
+        $ref: responseSchemaRef(path, 'get', String(status)),
+      })
+
+      const response = await app.inject({ method: 'GET', url })
+
+      expect(response.statusCode).toBe(status)
+      expect(response.headers['content-type']).toMatch(/^application\/json/)
+      const body: unknown = response.json()
+      expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
+    },
+  )
 })
