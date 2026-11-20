@@ -5,6 +5,31 @@ export type ClientOptions = {
 };
 
 /**
+ * День окна бронирования и все слоты выбранного типа.
+ */
+export type AvailabilityDay = {
+    /**
+     * Местный день.
+     */
+    date: string;
+    slots: Array<Slot>;
+};
+
+/**
+ * Окно бронирования: местные дни Варшавы, 14 дней, начиная с завтрашнего (BR-01).
+ */
+export type BookingWindow = {
+    /**
+     * Первый день окна.
+     */
+    from: string;
+    /**
+     * Последний день окна.
+     */
+    to: string;
+};
+
+/**
  * Код ошибки ответа API.
  */
 export type ErrorCode = 'VALIDATION_ERROR' | 'MEETING_TYPE_NOT_FOUND' | 'MEETING_TYPE_ID_TAKEN' | 'SLOT_TAKEN';
@@ -54,6 +79,39 @@ export type MeetingType = {
     durationMinutes: number;
 };
 
+/**
+ * Доступность времени для типа встречи на всё окно бронирования (ADR-0004).
+ */
+export type MeetingTypeAvailability = {
+    /**
+     * Часовой пояс дней и времени.
+     */
+    timeZone: 'Europe/Warsaw';
+    window: BookingWindow;
+    /**
+     * Дни окна по возрастанию.
+     */
+    days: Array<AvailabilityDay>;
+};
+
+/**
+ * Слот: возможный интервал встречи выбранного типа (docs/specs/booking.md §3).
+ */
+export type Slot = {
+    /**
+     * Начало, ISO 8601 со смещением Варшавы.
+     */
+    startsAt: string;
+    /**
+     * Конец: начало + длительность типа.
+     */
+    endsAt: string;
+    /**
+     * Свободен ли слот.
+     */
+    available: boolean;
+};
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -95,11 +153,11 @@ export type CreateMeetingTypeData = {
 
 export type CreateMeetingTypeErrors = {
     /**
-     * Ошибка проверки запроса: `fieldErrors` перечисляет все поля с ошибками (docs/specs/booking.md §5).
+     * Ошибка проверки запроса `VALIDATION_ERROR`: `fieldErrors` перечисляет все поля с ошибками.
      */
     400: ErrorResponse;
     /**
-     * Конфликт с уже существующими данными.
+     * Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`.
      */
     409: ErrorResponse;
 };
@@ -114,3 +172,57 @@ export type CreateMeetingTypeResponses = {
 };
 
 export type CreateMeetingTypeResponse = CreateMeetingTypeResponses[keyof CreateMeetingTypeResponses];
+
+export type GetMeetingTypeData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/meeting-types/{id}';
+};
+
+export type GetMeetingTypeErrors = {
+    /**
+     * Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.
+     */
+    404: ErrorResponse;
+};
+
+export type GetMeetingTypeError = GetMeetingTypeErrors[keyof GetMeetingTypeErrors];
+
+export type GetMeetingTypeResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: MeetingType;
+};
+
+export type GetMeetingTypeResponse = GetMeetingTypeResponses[keyof GetMeetingTypeResponses];
+
+export type GetMeetingTypeAvailabilityData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/meeting-types/{id}/availability';
+};
+
+export type GetMeetingTypeAvailabilityErrors = {
+    /**
+     * Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.
+     */
+    404: ErrorResponse;
+};
+
+export type GetMeetingTypeAvailabilityError = GetMeetingTypeAvailabilityErrors[keyof GetMeetingTypeAvailabilityErrors];
+
+export type GetMeetingTypeAvailabilityResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: MeetingTypeAvailability;
+};
+
+export type GetMeetingTypeAvailabilityResponse = GetMeetingTypeAvailabilityResponses[keyof GetMeetingTypeAvailabilityResponses];

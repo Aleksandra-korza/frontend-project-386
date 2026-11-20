@@ -62,7 +62,7 @@
             }
           },
           "400": {
-            "description": "Ошибка проверки запроса: `fieldErrors` перечисляет все поля с ошибками (docs/specs/booking.md §5).",
+            "description": "Ошибка проверки запроса `VALIDATION_ERROR`: `fieldErrors` перечисляет все поля с ошибками.",
             "content": {
               "application/json": {
                 "schema": {
@@ -72,7 +72,7 @@
             }
           },
           "409": {
-            "description": "Конфликт с уже существующими данными.",
+            "description": "Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -93,10 +93,127 @@
           }
         }
       }
+    },
+    "/api/meeting-types/{id}": {
+      "get": {
+        "operationId": "getMeetingType",
+        "description": "Тип встречи по идентификатору.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingType"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meeting-types/{id}/availability": {
+      "get": {
+        "operationId": "getMeetingTypeAvailability",
+        "description": "Окно бронирования и слоты типа встречи со статусом «свободен / занят».",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingTypeAvailability"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AvailabilityDay": {
+        "type": "object",
+        "required": [
+          "date",
+          "slots"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Местный день."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Slot"
+            }
+          }
+        },
+        "description": "День окна бронирования и все слоты выбранного типа."
+      },
+      "BookingWindow": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date",
+            "description": "Первый день окна."
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "description": "Последний день окна."
+          }
+        },
+        "description": "Окно бронирования: местные дни Варшавы, 14 дней, начиная с завтрашнего (BR-01)."
+      },
       "ErrorCode": {
         "type": "string",
         "enum": [
@@ -204,6 +321,59 @@
           }
         },
         "description": "Тип встречи, который гость выбирает при записи (docs/specs/booking.md §2)."
+      },
+      "MeetingTypeAvailability": {
+        "type": "object",
+        "required": [
+          "timeZone",
+          "window",
+          "days"
+        ],
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "enum": [
+              "Europe/Warsaw"
+            ],
+            "description": "Часовой пояс дней и времени."
+          },
+          "window": {
+            "$ref": "#/components/schemas/BookingWindow"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityDay"
+            },
+            "description": "Дни окна по возрастанию."
+          }
+        },
+        "description": "Доступность времени для типа встречи на всё окно бронирования (ADR-0004)."
+      },
+      "Slot": {
+        "type": "object",
+        "required": [
+          "startsAt",
+          "endsAt",
+          "available"
+        ],
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало, ISO 8601 со смещением Варшавы."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец: начало + длительность типа."
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Свободен ли слот."
+          }
+        },
+        "description": "Слот: возможный интервал встречи выбранного типа (docs/specs/booking.md §3)."
       }
     }
   }

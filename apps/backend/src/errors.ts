@@ -19,6 +19,7 @@ export class ApiError extends Error {
     fieldErrors?: FieldError[],
   ) {
     super(message)
+    this.name = 'ApiError'
     this.statusCode = statusCode
     this.code = code
     if (fieldErrors && fieldErrors.length > 0) this.fieldErrors = fieldErrors
@@ -32,6 +33,9 @@ export class ApiError extends Error {
     }
   }
 }
+
+export const meetingTypeNotFound = (id: string) =>
+  new ApiError(404, 'MEETING_TYPE_NOT_FOUND', `Meeting type "${id}" not found`)
 
 /** `400 VALIDATION_ERROR` с ошибками полей. */
 export const validationError = (fieldErrors: FieldError[]) =>

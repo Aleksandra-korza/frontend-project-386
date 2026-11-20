@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateMeetingTypeData, CreateMeetingTypeErrors, CreateMeetingTypeResponses, GetHealthData, GetHealthResponses, ListMeetingTypesData, ListMeetingTypesResponses } from './types.gen';
+import type { CreateMeetingTypeData, CreateMeetingTypeErrors, CreateMeetingTypeResponses, GetHealthData, GetHealthResponses, GetMeetingTypeAvailabilityData, GetMeetingTypeAvailabilityErrors, GetMeetingTypeAvailabilityResponses, GetMeetingTypeData, GetMeetingTypeErrors, GetMeetingTypeResponses, ListMeetingTypesData, ListMeetingTypesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -39,3 +39,13 @@ export const createMeetingType = <ThrowOnError extends boolean = false>(options:
         ...options.headers
     }
 });
+
+/**
+ * Тип встречи по идентификатору.
+ */
+export const getMeetingType = <ThrowOnError extends boolean = false>(options: Options<GetMeetingTypeData, ThrowOnError>): RequestResult<GetMeetingTypeResponses, GetMeetingTypeErrors, ThrowOnError> => (options.client ?? client).get<GetMeetingTypeResponses, GetMeetingTypeErrors, ThrowOnError>({ url: '/api/meeting-types/{id}', ...options });
+
+/**
+ * Окно бронирования и слоты типа встречи со статусом «свободен / занят».
+ */
+export const getMeetingTypeAvailability = <ThrowOnError extends boolean = false>(options: Options<GetMeetingTypeAvailabilityData, ThrowOnError>): RequestResult<GetMeetingTypeAvailabilityResponses, GetMeetingTypeAvailabilityErrors, ThrowOnError> => (options.client ?? client).get<GetMeetingTypeAvailabilityResponses, GetMeetingTypeAvailabilityErrors, ThrowOnError>({ url: '/api/meeting-types/{id}/availability', ...options });

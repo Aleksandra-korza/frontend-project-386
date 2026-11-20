@@ -6,6 +6,11 @@ import AdminPage from './pages/AdminPage'
 import { adminLoader } from './pages/adminLoader'
 import BookPage from './pages/BookPage'
 import { createMeetingTypeAction } from './pages/createMeetingTypeAction'
+import ChooseSlotPage from './pages/ChooseSlotPage'
+import {
+  chooseSlotLoader,
+  chooseSlotShouldRevalidate,
+} from './pages/chooseSlotLoader'
 import HomePage from './pages/HomePage'
 import { meetingTypesLoader } from './pages/meetingTypesLoader'
 import NotFoundPage from './pages/NotFoundPage'
@@ -22,6 +27,14 @@ export const routes: RouteObject[] = [
         path: 'book',
         loader: meetingTypesLoader,
         Component: BookPage,
+        HydrateFallback: Loading,
+        ErrorBoundary: RouteError,
+      },
+      {
+        path: 'book/:typeId',
+        loader: chooseSlotLoader,
+        shouldRevalidate: chooseSlotShouldRevalidate,
+        Component: ChooseSlotPage,
         HydrateFallback: Loading,
         ErrorBoundary: RouteError,
       },

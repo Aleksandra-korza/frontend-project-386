@@ -46,24 +46,52 @@ model MeetingType {
 op listMeetingTypes(): MeetingType[];
 
 /** Код ошибки ответа API. */
-enum ErrorCode { VALIDATION_ERROR, MEETING_TYPE_NOT_FOUND, MEETING_TYPE_ID_TAKEN, SLOT_TAKEN }
-/** Код ошибки поля. */
-enum FieldErrorCode { REQUIRED, TOO_LONG, INVALID_FORMAT, OUT_OF_RANGE, INVALID_SLOT }
-model FieldError { field: string; code: FieldErrorCode; }
-model ErrorResponse { code: ErrorCode; message: string; fieldErrors?: FieldError[]; }
+enum ErrorCode {
+  VALIDATION_ERROR,
+  MEETING_TYPE_NOT_FOUND,
+  MEETING_TYPE_ID_TAKEN,
+  SLOT_TAKEN,
+}
 
-/** Ошибка проверки запроса: `fieldErrors` перечисляет все поля с ошибками (docs/specs/booking.md §5). */
+/** Код ошибки поля. */
+enum FieldErrorCode {
+  REQUIRED,
+  TOO_LONG,
+  INVALID_FORMAT,
+  OUT_OF_RANGE,
+  INVALID_SLOT,
+}
+
+model FieldError {
+  field: string;
+  code: FieldErrorCode;
+}
+
+model ErrorResponse {
+  code: ErrorCode;
+  message: string;
+  fieldErrors?: FieldError[];
+}
+
+/** Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`. */
+@error
+model NotFoundError {
+  @statusCode statusCode: 404;
+  @bodyRoot body: ErrorResponse;
+}
+
+/** Ошибка проверки запроса `VALIDATION_ERROR`: `fieldErrors` перечисляет все поля с ошибками. */
 @error
 model BadRequestError {
   @statusCode statusCode: 400;
-  @body body: ErrorResponse;
+  @bodyRoot body: ErrorResponse;
 }
 
-/** Конфликт с уже существующими данными. */
+/** Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`. */
 @error
 model ConflictError {
   @statusCode statusCode: 409;
-  @body body: ErrorResponse;
+  @bodyRoot body: ErrorResponse;
 }
 
 /** Создание типа встречи владельцем; `title` и `description` обрезаются по краям, пустое описание = отсутствует. */
@@ -73,3 +101,55 @@ op createMeetingType(@body body: MeetingType): {
   @statusCode statusCode: 201;
   @body body: MeetingType;
 } | BadRequestError | ConflictError;
+
+/** Тип встречи по идентификатору. */
+@route("/api/meeting-types/{id}")
+@get
+op getMeetingType(@path id: string): MeetingType | NotFoundError;
+
+/** Окно бронирования: местные дни Варшавы, 14 дней, начиная с завтрашнего (BR-01). */
+model BookingWindow {
+  /** Первый день окна. */
+  from: plainDate;
+
+  /** Последний день окна. */
+  to: plainDate;
+}
+
+/** Слот: возможный интервал встречи выбранного типа (docs/specs/booking.md §3). */
+model Slot {
+  /** Начало, ISO 8601 со смещением Варшавы. */
+  startsAt: offsetDateTime;
+
+  /** Конец: начало + длительность типа. */
+  endsAt: offsetDateTime;
+
+  /** Свободен ли слот. */
+  available: boolean;
+}
+
+/** День окна бронирования и все слоты выбранного типа. */
+model AvailabilityDay {
+  /** Местный день. */
+  date: plainDate;
+
+  slots: Slot[];
+}
+
+/** Доступность времени для типа встречи на всё окно бронирования (ADR-0004). */
+model MeetingTypeAvailability {
+  /** Часовой пояс дней и времени. */
+  timeZone: "Europe/Warsaw";
+
+  window: BookingWindow;
+
+  /** Дни окна по возрастанию. */
+  days: AvailabilityDay[];
+}
+
+/** Окно бронирования и слоты типа встречи со статусом «свободен / занят». */
+@route("/api/meeting-types/{id}/availability")
+@get
+op getMeetingTypeAvailability(
+  @path id: string,
+): MeetingTypeAvailability | NotFoundError;
