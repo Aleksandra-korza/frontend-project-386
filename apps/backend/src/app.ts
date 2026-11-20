@@ -15,7 +15,7 @@ import { normalizeBookingInput } from './bookings.ts'
 import {
   openapiComponentsSchema,
   requestBodySchema,
-  responseSchema,
+  responseSchemas,
 } from './contract.ts'
 import {
   ApiError,
@@ -78,7 +78,7 @@ export function buildApp({
     '/api/meeting-types',
     {
       schema: {
-        response: { 200: responseSchema('/api/meeting-types', 'get', 200) },
+        response: responseSchemas('/api/meeting-types', 'get', [200]),
       },
     },
     () => store.listMeetingTypes(),
@@ -91,7 +91,11 @@ export function buildApp({
       attachValidation: true,
       schema: {
         body: requestBodySchema('/api/meeting-types', 'post'),
-        response: { 201: responseSchema('/api/meeting-types', 'post', 201) },
+        response: responseSchemas(
+          '/api/meeting-types',
+          'post',
+          [201, 400, 409],
+        ),
       },
       preValidation: (request, _reply, done) => {
         request.body = normalizeMeetingTypeInput(request.body)
@@ -130,10 +134,7 @@ export function buildApp({
     '/api/meeting-types/:id',
     {
       schema: {
-        response: {
-          200: responseSchema('/api/meeting-types/{id}', 'get', 200),
-          404: responseSchema('/api/meeting-types/{id}', 'get', 404),
-        },
+        response: responseSchemas('/api/meeting-types/{id}', 'get', [200, 404]),
       },
     },
     (request) => findMeetingType(request.params.id),
@@ -143,18 +144,11 @@ export function buildApp({
     '/api/meeting-types/:id/availability',
     {
       schema: {
-        response: {
-          200: responseSchema(
-            '/api/meeting-types/{id}/availability',
-            'get',
-            200,
-          ),
-          404: responseSchema(
-            '/api/meeting-types/{id}/availability',
-            'get',
-            404,
-          ),
-        },
+        response: responseSchemas(
+          '/api/meeting-types/{id}/availability',
+          'get',
+          [200, 404],
+        ),
       },
     },
     (request) =>
@@ -169,7 +163,7 @@ export function buildApp({
     '/api/bookings',
     {
       schema: {
-        response: { 200: responseSchema('/api/bookings', 'get', 200) },
+        response: responseSchemas('/api/bookings', 'get', [200]),
       },
     },
     (): UpcomingBooking[] =>
@@ -187,7 +181,11 @@ export function buildApp({
       attachValidation: true,
       schema: {
         body: requestBodySchema('/api/bookings', 'post'),
-        response: { 201: responseSchema('/api/bookings', 'post', 201) },
+        response: responseSchemas(
+          '/api/bookings',
+          'post',
+          [201, 400, 404, 409],
+        ),
       },
       preValidation: (request, _reply, done) => {
         request.body = normalizeBookingInput(request.body)

@@ -56,6 +56,19 @@ export function responseSchema(path: string, method: string, status: number) {
   return withAbsoluteRefs(schema)
 }
 
+/**
+ * Схемы ответов операции для `schema.response` Fastify: статус → схема из контракта.
+ * Перечисляются все статусы операции, включая ошибки (ADR-0005).
+ */
+export const responseSchemas = (
+  path: string,
+  method: string,
+  statuses: number[],
+) =>
+  Object.fromEntries(
+    statuses.map((status) => [status, responseSchema(path, method, status)]),
+  )
+
 /** JSON-схема тела запроса операции из контракта; ошибка, если её там нет. */
 export function requestBodySchema(path: string, method: string) {
   const schema =
