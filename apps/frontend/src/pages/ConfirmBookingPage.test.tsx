@@ -125,6 +125,9 @@ describe('подтверждение бронирования', () => {
     screen.getByText('понедельник, 23 ноября')
     screen.getByText('10:00–11:00')
     screen.getByText('Europe/Warsaw')
+    // §6.3: только тип, день, время, часовой пояс.
+    expect(screen.queryByText('Длительность')).toBe(null)
+    expect(screen.queryByText('1 ч')).toBe(null)
     expect(
       screen
         .getByRole('link', { name: 'Забронировать ещё' })

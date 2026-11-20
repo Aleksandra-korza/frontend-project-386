@@ -16,13 +16,14 @@ import type { CreateBookingResult } from './createBookingAction'
 
 type Summary = {
   title: string
-  durationMinutes: number
+  /** Без длительности — экран успеха (§6.3: тип, день, время, часовой пояс). */
+  durationMinutes?: number
   startsAt: string
   endsAt: string
   timeZone: string
 }
 
-// Сводка бронирования: тип, длительность, день, время, часовой пояс из ответа API.
+// Сводка бронирования: тип, длительность (если передана), день, время, часовой пояс из ответа API.
 function BookingSummary({
   title,
   durationMinutes,
@@ -34,9 +35,11 @@ function BookingSummary({
   return (
     <dl className="grid gap-3 text-sm">
       <SummaryItem term="Тип встречи">{title}</SummaryItem>
-      <SummaryItem term="Длительность">
-        {formatDuration(durationMinutes)}
-      </SummaryItem>
+      {durationMinutes !== undefined && (
+        <SummaryItem term="Длительность">
+          {formatDuration(durationMinutes)}
+        </SummaryItem>
+      )}
       <SummaryItem term="День">
         {formatDay(localDate(startsAt, timeZone))}
       </SummaryItem>
@@ -80,7 +83,6 @@ function ConfirmBookingPage() {
           <div className="w-full rounded-xl border bg-background/80 p-4">
             <BookingSummary
               title={meetingType.title}
-              durationMinutes={meetingType.durationMinutes}
               startsAt={result.booking.startsAt}
               endsAt={result.booking.endsAt}
               timeZone={timeZone}
