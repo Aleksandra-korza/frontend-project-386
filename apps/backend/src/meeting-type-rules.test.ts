@@ -1,14 +1,25 @@
-import { afterAll, describe, expect, test } from 'vitest'
-import { buildApp } from './app.ts'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { startTestServer } from './testing/http.ts'
 
 // Правила полей типа встречи (docs/specs/booking.md §2, таблица «Ошибки полей» §5).
 // Правила складываются из схемы контракта и проверок кода, поэтому проверяются
-// через приложение в процессе (inject), без HTTP-сервера.
-const app = buildApp()
+// через настоящий HTTP-сервер на случайном порту (§7).
+let server: Awaited<ReturnType<typeof startTestServer>>
+
+beforeAll(async () => {
+  server = await startTestServer()
+})
 
 afterAll(async () => {
-  await app.close()
+  await server.close()
 })
+
+const postMeetingType = (body: Record<string, unknown>) =>
+  server.request('/api/meeting-types', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 
 const valid = { id: 'intro-call', title: 'Знакомство', durationMinutes: 30 }
 let sequence = 0
@@ -22,15 +33,12 @@ async function fieldError(field: string, value: unknown) {
     [field]: value,
   }
   if (value === undefined) delete body[field]
-  const response = await app.inject({
-    method: 'POST',
-    url: '/api/meeting-types',
-    payload: body,
-  })
-  if (response.statusCode === 201) return undefined
-  const { fieldErrors = [] } = response.json<{
+  const response = await postMeetingType(body)
+  if (response.status === 201) return undefined
+  expect(response.status).toBe(400)
+  const { fieldErrors = [] } = (await response.json()) as {
     fieldErrors?: { field: string; code: string }[]
-  }>()
+  }
   expect(fieldErrors).toHaveLength(1)
   expect(fieldErrors[0]?.field).toBe(field)
   return fieldErrors[0]?.code
@@ -109,19 +117,15 @@ describe('durationMinutes', () => {
 })
 
 test('сохраняет обрезанные значения, пустое описание не сохраняется', async () => {
-  const response = await app.inject({
-    method: 'POST',
-    url: '/api/meeting-types',
-    payload: {
-      id: 'trimmed',
-      title: '  Знакомство ',
-      description: '   ',
-      durationMinutes: 480,
-    },
+  const response = await postMeetingType({
+    id: 'trimmed',
+    title: '  Знакомство ',
+    description: '   ',
+    durationMinutes: 480,
   })
 
-  expect(response.statusCode).toBe(201)
-  expect(response.json()).toEqual({
+  expect(response.status).toBe(201)
+  expect(await response.json()).toEqual({
     id: 'trimmed',
     title: 'Знакомство',
     durationMinutes: 480,
