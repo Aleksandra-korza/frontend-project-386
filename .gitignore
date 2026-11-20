@@ -9,3 +9,8 @@ dist/
 
 # Vitest
 .vitest/
+
+# Playwright (e2e/)
+test-results/
+playwright-report/
+blob-report/

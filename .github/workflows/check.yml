@@ -100,3 +100,41 @@ jobs:
           fi
           git log --format='  %h %s' "$FROM..$AFTER"
           pnpm exec commitlint --from "$FROM" --to "$AFTER" --verbose
+
+  # Браузерные сценарии (docs/specs/booking.md §7): Playwright сам запускает
+  # backend :4000 и frontend :5173. В `mise run check` не входят.
+  e2e:
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
+        with:
+          version: 2026.11.9
+
+      - name: Install dependencies
+        run: mise run install-deps
+
+      # Chromium той же версии, что @playwright/test в e2e/, с системными библиотеками.
+      - name: Install Chromium
+        working-directory: e2e
+        run: mise exec -- pnpm exec playwright install --with-deps chromium
+
+      - name: E2E
+        run: mise run e2e
+
+      - name: Upload Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 14

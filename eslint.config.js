@@ -18,6 +18,10 @@ export default defineConfig([
     // Сгенерированные SDK frontend и типы backend (mise run codegen) — не редактируются вручную.
     'apps/frontend/src/client/',
     'apps/backend/src/generated/',
+    // Артефакты Playwright (mise run e2e).
+    '**/test-results/',
+    '**/playwright-report/',
+    '**/blob-report/',
   ]),
 
   {
@@ -61,6 +65,14 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+
+  {
+    name: 'project/e2e',
+    files: ['e2e/**/*.ts'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 

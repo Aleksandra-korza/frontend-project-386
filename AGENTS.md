@@ -8,6 +8,7 @@ pnpm-монорепозиторий (`apps/*`):
 
 - `apps/backend` — API на Fastify + TypeScript, все маршруты под `/api`. Фабрика приложения `src/app.ts` (`buildApp()`), запуск сервера `src/server.ts`.
 - `apps/frontend` — React + Vite + TypeScript, Tailwind CSS 4, shadcn/ui. В dev-режиме `/api` проксируется на backend.
+- `e2e/` — браузерные сценарии на Playwright (Chromium) против настоящих серверов.
 - `api/` — контракт API на TypeSpec (`main.tsp`). Из него генерируются OpenAPI (`api/generated/openapi.json`), клиентский SDK frontend (`apps/frontend/src/client`) и типы backend (`apps/backend/src/generated`), генератор `@hey-api/openapi-ts`.
 - `docs/` — требования (`requirements.md`), ТЗ (`task.md`), исследование стека, макеты (`reference/`), спецификации фич (`specs/`), архитектурные решения (`adr/`) и открытые вопросы следующих этапов (`open-questions.md`).
 - `GLOSSARY.md` — словарь терминов предметной области; используйте его термины в коде, задачах и документах.
@@ -43,6 +44,7 @@ mise daemons stop
 mise run codegen        # TypeSpec → OpenAPI → SDK frontend
 mise run check          # pnpm lint → format:check → typecheck → test (до первой ошибки)
 mise run build          # сборка backend и frontend
+mise run e2e            # браузерные сценарии (Playwright): сам запускает backend и frontend на 4000/5173
 ```
 
 API меняется через `api/main.tsp`, затем `mise run codegen`. Файлы в `api/generated/`, `apps/frontend/src/client/` и `apps/backend/src/generated/` генерируются и хранятся в Git — не редактируйте их вручную; CI проверяет, что после `mise run codegen` в них нет изменений. Backend регистрирует маршруты вручную со схемами из `openapi.json` (`apps/backend/src/contract.ts`, ADR-0005), соответствие контракту проверяет `apps/backend/src/contract.test.ts`.
@@ -54,7 +56,7 @@ mise exec -- pnpm exec vitest run apps/backend/src/app.test.ts
 mise exec -- pnpm test --project @calendar/backend
 ```
 
-Изменение считается готовым, когда `mise run check` и `mise run build` проходят. CI (`.github/workflows/check.yml`) запускает те же задачи.
+Изменение считается готовым, когда `mise run check` и `mise run build` проходят. CI (`.github/workflows/check.yml`) запускает те же задачи. `mise run check` не включает браузерные сценарии: `mise run e2e` — отдельно (в CI — отдельная job). Перед первым запуском установите Chromium: `mise exec -- pnpm --filter @calendar/e2e exec playwright install chromium`. Порты 4000 и 5173 должны быть свободны (остановите `mise daemons`).
 
 ## Коммиты
 

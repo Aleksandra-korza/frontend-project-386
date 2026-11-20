@@ -79,6 +79,7 @@ curl http://127.0.0.1:4000/api/health   # {"status":"ok"}
 ```bash
 mise run check      # ESLint, Prettier, проверка типов и тесты
 mise run build      # сборка backend и frontend
+mise run e2e        # браузерные сценарии (Playwright, Chromium)
 ```
 
 ### Изменение API

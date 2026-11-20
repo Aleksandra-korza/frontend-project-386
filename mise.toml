@@ -46,6 +46,12 @@ run = [
   "pnpm test",
 ]
 
+[tasks.e2e]
+description = "Браузерные сценарии (Playwright, e2e/): сам запускает backend :4000 и frontend :5173 и останавливает их после прогона"
+dir = "e2e"
+run = "pnpm exec playwright test"
+raw = true
+
 [tasks.build]
 description = "Собрать backend и frontend"
 run = "pnpm build"
