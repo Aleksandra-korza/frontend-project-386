@@ -25,9 +25,10 @@ docs/stack-research.md
 # Чтобы включить форматирование конкретного файла, добавьте исключение: !/ИМЯ.md
 /*.md
 
-# Сгенерированные файлы (mise run codegen): OpenAPI и SDK frontend
+# Сгенерированные файлы (mise run codegen): OpenAPI, SDK frontend и типы backend
 api/generated/
 apps/frontend/src/client/
+apps/backend/src/generated/
 
 # Внешние скиллы Matt Pocock (npx skills add mattpocock/skills, версии — skills-lock.json).
 # Не форматировать: файлы должны совпадать с источником и хешами в skills-lock.json.

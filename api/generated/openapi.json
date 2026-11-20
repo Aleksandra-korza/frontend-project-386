@@ -24,6 +24,28 @@
           }
         }
       }
+    },
+    "/api/meeting-types": {
+      "get": {
+        "operationId": "listMeetingTypes",
+        "description": "Каталог типов встреч в порядке создания, старые первыми.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MeetingType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -42,6 +64,42 @@
           }
         },
         "description": "Состояние backend."
+      },
+      "MeetingType": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "durationMinutes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 40,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Идентификатор-slug: задаёт владелец, уникален и неизменяем."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Название."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Необязательное описание."
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 15,
+            "maximum": 480,
+            "description": "Длительность встречи в минутах: 15–480 (BR-07); кратность 15 проверяет backend."
+          }
+        },
+        "description": "Тип встречи, который гость выбирает при записи (docs/specs/booking.md §2)."
       }
     }
   }

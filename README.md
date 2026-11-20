@@ -33,7 +33,7 @@
 - **Monorepo:** pnpm workspaces (`apps/backend`, `apps/frontend`), Node.js 24, TypeScript 7.
 - **Backend:** Fastify 5.
 - **Frontend:** React 19, Vite 8, Tailwind CSS 4, shadcn/ui.
-- **API:** контракт на TypeSpec (`api/main.tsp`) → OpenAPI 3.0 (`api/generated/openapi.json`) → TypeScript SDK для frontend (`@hey-api/openapi-ts`, `apps/frontend/src/client`).
+- **API:** контракт на TypeSpec (`api/main.tsp`) → OpenAPI 3.0 (`api/generated/openapi.json`) → TypeScript SDK для frontend и типы для backend (`@hey-api/openapi-ts`, `apps/frontend/src/client`, `apps/backend/src/generated`).
 - **Качество:** Vitest, ESLint, Prettier, проверка типов `tsc`.
 - **Инструменты:** [mise](https://mise.jdx.dev/) — версии инструментов, задачи и фоновые процессы (daemons через pitchfork); Git-хуки [hk](https://hk.jdx.dev/); commitlint (Conventional Commits); GitHub Actions.
 

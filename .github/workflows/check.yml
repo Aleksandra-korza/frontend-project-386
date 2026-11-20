@@ -43,7 +43,7 @@ jobs:
         run: |
           mise run codegen
           git diff --exit-code
-          UNTRACKED=$(git status --porcelain --untracked-files=all -- api/generated apps/frontend/src/client)
+          UNTRACKED=$(git status --porcelain --untracked-files=all -- api/generated apps/frontend/src/client apps/backend/src/generated)
           if [ -n "$UNTRACKED" ]; then
             echo "::error title=codegen::Новые сгенерированные файлы не закоммичены:"
             echo "$UNTRACKED"

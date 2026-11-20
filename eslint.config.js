@@ -15,8 +15,9 @@ export default defineConfig([
     '**/dist/',
     '**/coverage/',
     '**/.vitest/',
-    // Сгенерированный SDK (mise run codegen) — не редактируется вручную.
+    // Сгенерированные SDK frontend и типы backend (mise run codegen) — не редактируются вручную.
     'apps/frontend/src/client/',
+    'apps/backend/src/generated/',
   ]),
 
   {

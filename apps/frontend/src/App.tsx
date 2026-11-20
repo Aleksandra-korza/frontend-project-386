@@ -1,18 +1,26 @@
-import { Outlet } from 'react-router'
-import ServiceStatus from '@/components/ServiceStatus'
+import { Outlet, useNavigation } from 'react-router'
+import Loading from '@/components/Loading'
 import SiteHeader from '@/components/SiteHeader'
 
-// Макет всех страниц: шапка, страница, подвал со статусом сервиса.
+// Макет всех страниц: шапка, индикатор загрузки над текущей страницей, страница.
 function App() {
+  // Переход на страницу, которая загружает данные (loader).
+  const isLoading = useNavigation().state === 'loading'
+
   return (
     <div className="bg-page flex min-h-svh flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
+      <main
+        aria-busy={isLoading}
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-16"
+      >
+        {isLoading && (
+          <div className="mb-6">
+            <Loading />
+          </div>
+        )}
         <Outlet />
       </main>
-      <footer className="mx-auto w-full max-w-6xl px-4 pb-6 text-xs text-muted-foreground sm:px-6">
-        <ServiceStatus />
-      </footer>
     </div>
   )
 }

@@ -11,6 +11,28 @@ export type HealthStatus = {
     status: 'ok';
 };
 
+/**
+ * Тип встречи, который гость выбирает при записи (docs/specs/booking.md §2).
+ */
+export type MeetingType = {
+    /**
+     * Идентификатор-slug: задаёт владелец, уникален и неизменяем.
+     */
+    id: string;
+    /**
+     * Название.
+     */
+    title: string;
+    /**
+     * Необязательное описание.
+     */
+    description?: string;
+    /**
+     * Длительность встречи в минутах: 15–480 (BR-07); кратность 15 проверяет backend.
+     */
+    durationMinutes: number;
+};
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -26,3 +48,19 @@ export type GetHealthResponses = {
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type ListMeetingTypesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/meeting-types';
+};
+
+export type ListMeetingTypesResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<MeetingType>;
+};
+
+export type ListMeetingTypesResponse = ListMeetingTypesResponses[keyof ListMeetingTypesResponses];

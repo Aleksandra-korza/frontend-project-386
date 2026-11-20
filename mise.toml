@@ -51,7 +51,7 @@ description = "Собрать backend и frontend"
 run = "pnpm build"
 
 [tasks.codegen]
-description = "TypeSpec (api/) → OpenAPI (api/generated) → SDK frontend (apps/frontend/src/client)"
+description = "TypeSpec (api/) → OpenAPI (api/generated) → SDK frontend (apps/frontend/src/client) и типы backend (apps/backend/src/generated)"
 run = [
   "pnpm exec tsp compile api",
   "pnpm exec openapi-ts",

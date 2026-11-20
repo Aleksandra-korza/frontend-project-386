@@ -9,6 +9,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { routes } from './router'
+import { stubFetch } from './testing/fetch'
 
 // Маршруты приложения в памяти — тот же список, что и в браузере (ADR-0001).
 // Запросы getBy*/findBy* сами являются проверками: без найденного элемента тест падает.
@@ -20,11 +21,10 @@ const renderAt = (path: string) =>
   )
 
 beforeEach(() => {
-  // Граница системы: статус сервиса в подвале запрашивает /api/health.
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(() => Promise.resolve(Response.json({ status: 'ok' }))),
-  )
+  // Граница системы: каталог на /book обращается к API.
+  stubFetch({
+    '/api/meeting-types': () => Response.json([]),
+  })
 })
 
 afterEach(() => {
@@ -48,7 +48,7 @@ describe('главная страница', () => {
 })
 
 describe('страница записи', () => {
-  test('открывается по кнопке «Записаться» и пока сообщает, что запись недоступна', async () => {
+  test('открывается по кнопке «Записаться»', async () => {
     renderAt('/')
 
     const main = within(await screen.findByRole('main'))
@@ -58,7 +58,6 @@ describe('страница записи', () => {
       level: 1,
       name: 'Запись на встречу',
     })
-    screen.getByText(/Запись пока недоступна\./)
   })
 })
 
