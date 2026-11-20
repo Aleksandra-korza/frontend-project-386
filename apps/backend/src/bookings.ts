@@ -1,4 +1,5 @@
 import { Temporal } from 'temporal-polyfill'
+import { normalizeObjectBody } from './request-body.ts'
 
 // Правила бронирования (docs/specs/booking.md §2, §4; ADR-0003).
 
@@ -20,15 +21,9 @@ export function overlaps(first: Interval, second: Interval): boolean {
 }
 
 /** Обрезает имя гостя по краям; `null` — как отсутствие поля. */
-export function normalizeBookingInput<T>(body: T): T {
-  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
-    return body
-  }
-  const normalized: Record<string, unknown> = Object.fromEntries(
-    Object.entries(body).filter(([, value]) => value !== null),
-  )
-  if (typeof normalized.guestName === 'string') {
-    normalized.guestName = normalized.guestName.trim()
-  }
-  return normalized as T
-}
+export const normalizeBookingInput = <T>(body: T): T =>
+  normalizeObjectBody(body, (fields) => {
+    if (typeof fields.guestName === 'string') {
+      fields.guestName = fields.guestName.trim()
+    }
+  })

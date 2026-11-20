@@ -1,4 +1,5 @@
 import type { FieldError } from './generated/index.ts'
+import { normalizeObjectBody } from './request-body.ts'
 
 // Правила полей типа встречи, которые не выражаются схемой контракта
 // (docs/specs/booking.md §2, §5): обрезка пробелов до проверки схемой
@@ -16,17 +17,11 @@ export function meetingTypeRuleErrors(body: unknown): FieldError[] {
 }
 
 /** Обрезает `title` и `description`; пустое описание и `null` — как отсутствие поля. */
-export function normalizeMeetingTypeInput<T>(body: T): T {
-  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
-    return body
-  }
-  const normalized: Record<string, unknown> = Object.fromEntries(
-    Object.entries(body).filter(([, value]) => value !== null),
-  )
-  for (const field of ['title', 'description']) {
-    const value = normalized[field]
-    if (typeof value === 'string') normalized[field] = value.trim()
-  }
-  if (normalized.description === '') delete normalized.description
-  return normalized as T
-}
+export const normalizeMeetingTypeInput = <T>(body: T): T =>
+  normalizeObjectBody(body, (fields) => {
+    for (const field of ['title', 'description']) {
+      const value = fields[field]
+      if (typeof value === 'string') fields[field] = value.trim()
+    }
+    if (fields.description === '') delete fields.description
+  })
