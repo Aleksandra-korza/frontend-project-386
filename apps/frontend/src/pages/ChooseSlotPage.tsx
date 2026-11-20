@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button'
 import { formatDay, formatTime, parseDate } from '@/lib/dates'
 import { formatDuration } from '@/lib/duration'
 import type { chooseSlotLoader } from './chooseSlotLoader'
+import type { BackToDayReason } from './createBookingAction'
+
+// Сообщение после возврата с подтверждения (?error=, docs/specs/booking.md §6.3).
+const BACK_TO_DAY_MESSAGES: Partial<Record<string, string>> = {
+  SLOT_TAKEN: 'Это время уже заняли. Выберите другое.',
+  INVALID_SLOT: 'Это время недоступно для записи. Выберите другое.',
+} satisfies Record<BackToDayReason, string>
 
 // Выбор дня и времени (docs/specs/booking.md §6.1). Слоты и их занятость считает
 // сервер; клиент только считает свободные слоты дня (ADR-0004, п. 3).
@@ -36,6 +43,7 @@ function ChooseSlotPage() {
   )
 
   const time = (dateTime: string) => formatTime(dateTime, timeZone)
+  const backToDayMessage = BACK_TO_DAY_MESSAGES[searchParams.get('error') ?? '']
 
   return (
     <>
@@ -54,6 +62,14 @@ function ChooseSlotPage() {
           {meetingType.description && (
             <p className="text-lg text-muted-foreground">
               {meetingType.description}
+            </p>
+          )}
+          {backToDayMessage && (
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
+              {backToDayMessage}
             </p>
           )}
         </div>

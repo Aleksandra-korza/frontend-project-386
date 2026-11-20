@@ -17,6 +17,15 @@ const MESSAGES: Record<string, Partial<Record<FieldErrorCode, string>>> = {
   description: {
     TOO_LONG: 'Описание — не длиннее 500 символов',
   },
+  guestName: {
+    REQUIRED: 'Укажите имя',
+    TOO_LONG: 'Имя — не длиннее 100 символов',
+  },
+  guestEmail: {
+    REQUIRED: 'Укажите email',
+    INVALID_FORMAT: 'Укажите корректный email',
+    TOO_LONG: 'Email — не длиннее 254 символов',
+  },
   durationMinutes: {
     REQUIRED: 'Выберите длительность',
     OUT_OF_RANGE: 'Длительность — от 15 минут до 8 часов, кратно 15 минутам',

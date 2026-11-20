@@ -7,6 +7,9 @@ import { adminLoader } from './pages/adminLoader'
 import BookPage from './pages/BookPage'
 import { createMeetingTypeAction } from './pages/createMeetingTypeAction'
 import ChooseSlotPage from './pages/ChooseSlotPage'
+import ConfirmBookingPage from './pages/ConfirmBookingPage'
+import { confirmBookingLoader } from './pages/confirmBookingLoader'
+import { createBookingAction } from './pages/createBookingAction'
 import {
   chooseSlotLoader,
   chooseSlotShouldRevalidate,
@@ -35,6 +38,14 @@ export const routes: RouteObject[] = [
         loader: chooseSlotLoader,
         shouldRevalidate: chooseSlotShouldRevalidate,
         Component: ChooseSlotPage,
+        HydrateFallback: Loading,
+        ErrorBoundary: RouteError,
+      },
+      {
+        path: 'book/:typeId/confirm',
+        loader: confirmBookingLoader,
+        action: createBookingAction,
+        Component: ConfirmBookingPage,
         HydrateFallback: Loading,
         ErrorBoundary: RouteError,
       },

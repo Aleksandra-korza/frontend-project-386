@@ -65,6 +65,10 @@ export const formatTime = (dateTime: string, timeZone: string) =>
     .toPlainTime()
     .toString({ smallestUnit: 'minute' })
 
+/** Местный день момента `dateTime` в поясе `timeZone`. */
+export const localDate = (dateTime: string, timeZone: string) =>
+  Temporal.Instant.from(dateTime).toZonedDateTimeISO(timeZone).toPlainDate()
+
 /** День `YYYY-MM-DD` или undefined, если строка не дата. */
 export function parseDate(value: string | null) {
   if (value === null || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
