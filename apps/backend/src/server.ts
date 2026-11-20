@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { buildApp } from './app.ts'
+import { registerShutdown } from './shutdown.ts'
 import { resolveStaticDir } from './static-dir.ts'
 
 const port = Number(process.env.PORT ?? 4000)
@@ -13,6 +14,8 @@ const app = buildApp({
     defaultDir: path.join(import.meta.dirname, '../../frontend/dist'),
   }),
 })
+
+registerShutdown(app, process)
 
 try {
   await app.listen({ port, host })
