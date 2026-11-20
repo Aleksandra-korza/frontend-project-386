@@ -1,4 +1,7 @@
-import type { FieldErrorCode } from '@/client'
+import type { FieldError, FieldErrorCode } from '@/client'
+
+/** Ошибки полей из ответа API для формы: имя поля → код ошибки. */
+export type FieldErrors = Partial<Record<string, FieldErrorCode>>
 
 /** Подсказка формата идентификатора типа встречи; она же — текст его ошибки формата. */
 export const MEETING_TYPE_ID_HINT =
@@ -35,4 +38,17 @@ const MESSAGES: Record<string, Partial<Record<FieldErrorCode, string>>> = {
 /** Текст ошибки поля; для сочетаний без отдельной строки — общий текст. */
 export function fieldErrorMessage(field: string, code: FieldErrorCode) {
   return MESSAGES[field]?.[code] ?? 'Проверьте значение поля'
+}
+
+/** Ошибки полей `fieldErrors` из `ErrorResponse` в виде «имя поля → код». */
+export const fieldErrorsByName = (fieldErrors: FieldError[]): FieldErrors =>
+  Object.fromEntries(fieldErrors.map(({ field, code }) => [field, code]))
+
+/** Текст ошибки поля формы или undefined, если у поля нет ошибки. */
+export function fieldErrorText(
+  fieldErrors: FieldErrors | undefined,
+  field: string,
+) {
+  const code = fieldErrors?.[field]
+  return code && fieldErrorMessage(field, code)
 }

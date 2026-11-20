@@ -1,14 +1,12 @@
 import type { ActionFunctionArgs } from 'react-router'
-import {
-  createMeetingType,
-  type FieldErrorCode,
-  type MeetingType,
-} from '@/client'
+import { createMeetingType, type MeetingType } from '@/client'
+import { type FieldErrors, fieldErrorsByName } from '@/lib/fieldErrors'
+import { formText } from '@/lib/form'
 
 export type CreateMeetingTypeResult =
   | { status: 'created' }
   /** Ошибки полей: имя поля → код ошибки. */
-  | { status: 'invalid'; fieldErrors: Record<string, FieldErrorCode> }
+  | { status: 'invalid'; fieldErrors: FieldErrors }
   | { status: 'idTaken' }
   /** Сеть или 5xx. */
   | { status: 'failed' }
@@ -19,10 +17,7 @@ export async function createMeetingTypeAction({
   request,
 }: ActionFunctionArgs): Promise<CreateMeetingTypeResult> {
   const form = await request.formData()
-  const text = (name: string) => {
-    const value = form.get(name)
-    return typeof value === 'string' ? value : ''
-  }
+  const text = formText(form)
   const description = text('description')
   const duration = text('durationMinutes')
   // Пустые необязательные значения не отправляются: ошибку
@@ -41,9 +36,7 @@ export async function createMeetingTypeAction({
     if (error?.code === 'VALIDATION_ERROR' && error.fieldErrors?.length) {
       return {
         status: 'invalid',
-        fieldErrors: Object.fromEntries(
-          error.fieldErrors.map(({ field, code }) => [field, code]),
-        ),
+        fieldErrors: fieldErrorsByName(error.fieldErrors),
       }
     }
   } catch {

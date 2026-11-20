@@ -1,16 +1,13 @@
 import { data, redirect, type ActionFunctionArgs } from 'react-router'
+import { type Booking, createBooking, type ErrorResponse } from '@/client'
 import { localDate } from '@/lib/dates'
-import {
-  type Booking,
-  createBooking,
-  type ErrorResponse,
-  type FieldErrorCode,
-} from '@/client'
+import { type FieldErrors, fieldErrorsByName } from '@/lib/fieldErrors'
+import { formText } from '@/lib/form'
 
 export type CreateBookingResult =
   | { status: 'booked'; booking: Booking }
   /** Ошибки полей гостя: имя поля → код ошибки. */
-  | { status: 'invalid'; fieldErrors: Record<string, FieldErrorCode> }
+  | { status: 'invalid'; fieldErrors: FieldErrors }
   /** Сеть или 5xx. */
   | { status: 'failed' }
 
@@ -26,10 +23,7 @@ export async function createBookingAction({
   params,
 }: ActionFunctionArgs): Promise<CreateBookingResult | Response> {
   const form = await request.formData()
-  const text = (name: string) => {
-    const value = form.get(name)
-    return typeof value === 'string' ? value : ''
-  }
+  const text = formText(form)
   const meetingTypeId = params.typeId ?? ''
   const startsAt = text('startsAt')
 
@@ -74,9 +68,7 @@ export async function createBookingAction({
     }
     return {
       status: 'invalid',
-      fieldErrors: Object.fromEntries(
-        error.fieldErrors.map(({ field, code }) => [field, code]),
-      ),
+      fieldErrors: fieldErrorsByName(error.fieldErrors),
     }
   }
   return { status: 'failed' }

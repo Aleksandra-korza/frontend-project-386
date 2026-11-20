@@ -10,7 +10,7 @@ import { controlClass, Field } from '@/components/FormField'
 import { Button } from '@/components/ui/button'
 import { formatDay, formatTime, localDate } from '@/lib/dates'
 import { formatDuration } from '@/lib/duration'
-import { fieldErrorMessage } from '@/lib/fieldErrors'
+import { fieldErrorText } from '@/lib/fieldErrors'
 import type { confirmBookingLoader } from './confirmBookingLoader'
 import type { CreateBookingResult } from './createBookingAction'
 
@@ -96,11 +96,11 @@ function ConfirmBookingPage() {
     )
   }
 
-  const errorOf = (field: string) => {
-    const code =
-      result?.status === 'invalid' ? result.fieldErrors[field] : undefined
-    return code && fieldErrorMessage(field, code)
-  }
+  const errorOf = (field: string) =>
+    fieldErrorText(
+      result?.status === 'invalid' ? result.fieldErrors : undefined,
+      field,
+    )
   const date = localDate(slot.startsAt, timeZone).toString()
 
   return (

@@ -12,7 +12,7 @@ import {
   TIME_ZONE,
 } from '@/lib/dates'
 import { formatDuration } from '@/lib/duration'
-import { fieldErrorMessage, MEETING_TYPE_ID_HINT } from '@/lib/fieldErrors'
+import { fieldErrorText, MEETING_TYPE_ID_HINT } from '@/lib/fieldErrors'
 import type { adminLoader } from './adminLoader'
 import type { CreateMeetingTypeResult } from './createMeetingTypeAction'
 
@@ -32,9 +32,10 @@ function CreateMeetingTypeForm() {
     if (field === 'id' && result?.status === 'idTaken') {
       return 'Тип встречи с таким идентификатором уже существует'
     }
-    const code =
-      result?.status === 'invalid' ? result.fieldErrors[field] : undefined
-    return code && fieldErrorMessage(field, code)
+    return fieldErrorText(
+      result?.status === 'invalid' ? result.fieldErrors : undefined,
+      field,
+    )
   }
 
   return (
