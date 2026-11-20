@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateBookingData, CreateBookingErrors, CreateBookingResponses, CreateMeetingTypeData, CreateMeetingTypeErrors, CreateMeetingTypeResponses, GetHealthData, GetHealthResponses, GetMeetingTypeAvailabilityData, GetMeetingTypeAvailabilityErrors, GetMeetingTypeAvailabilityResponses, GetMeetingTypeData, GetMeetingTypeErrors, GetMeetingTypeResponses, ListMeetingTypesData, ListMeetingTypesResponses } from './types.gen';
+import type { CreateBookingData, CreateBookingErrors, CreateBookingResponses, CreateMeetingTypeData, CreateMeetingTypeErrors, CreateMeetingTypeResponses, GetHealthData, GetHealthResponses, GetMeetingTypeAvailabilityData, GetMeetingTypeAvailabilityErrors, GetMeetingTypeAvailabilityResponses, GetMeetingTypeData, GetMeetingTypeErrors, GetMeetingTypeResponses, ListMeetingTypesData, ListMeetingTypesResponses, ListUpcomingBookingsData, ListUpcomingBookingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Предстоящие бронирования всех типов: только встречи, начало которых строго позже
+ * текущего момента (BR-24), по возрастанию `startsAt`.
+ */
+export const listUpcomingBookings = <ThrowOnError extends boolean = false>(options?: Options<ListUpcomingBookingsData, ThrowOnError>): RequestResult<ListUpcomingBookingsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListUpcomingBookingsResponses, unknown, ThrowOnError>({ url: '/api/bookings', ...options });
 
 /**
  * Создание бронирования гостем (ADR-0003). Порядок проверок: тип встречи

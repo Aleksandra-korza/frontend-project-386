@@ -188,4 +188,19 @@ describe('контракт OpenAPI', () => {
       expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
     },
   )
+
+  // После POST /api/bookings: в списке есть созданное бронирование.
+  test('GET /api/bookings соответствует контракту', async () => {
+    const validate = ajv.compile({
+      $ref: responseSchemaRef('/api/bookings', 'get', '200'),
+    })
+
+    const response = await app.inject({ method: 'GET', url: '/api/bookings' })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.headers['content-type']).toMatch(/^application\/json/)
+    const body: unknown = response.json()
+    expect(body).toHaveLength(1)
+    expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
+  })
 })

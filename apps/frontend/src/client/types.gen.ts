@@ -168,6 +168,60 @@ export type Slot = {
     available: boolean;
 };
 
+/**
+ * Предстоящее бронирование в списке владельца: бронирование и название его типа.
+ */
+export type UpcomingBooking = {
+    /**
+     * Идентификатор, генерирует сервер.
+     */
+    id: string;
+    /**
+     * Тип встречи.
+     */
+    meetingTypeId: string;
+    /**
+     * Начало, ISO 8601 со смещением Варшавы.
+     */
+    startsAt: string;
+    /**
+     * Конец: начало + длительность типа; вычисляет сервер.
+     */
+    endsAt: string;
+    /**
+     * Имя гостя после обрезки пробелов.
+     */
+    guestName: string;
+    /**
+     * Email гостя.
+     */
+    guestEmail: string;
+    /**
+     * Момент создания, ISO 8601 со смещением Варшавы.
+     */
+    createdAt: string;
+    /**
+     * Название типа встречи.
+     */
+    meetingTypeTitle: string;
+};
+
+export type ListUpcomingBookingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/bookings';
+};
+
+export type ListUpcomingBookingsResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<UpcomingBooking>;
+};
+
+export type ListUpcomingBookingsResponse = ListUpcomingBookingsResponses[keyof ListUpcomingBookingsResponses];
+
 export type CreateBookingData = {
     body: CreateBookingRequest;
     path?: never;

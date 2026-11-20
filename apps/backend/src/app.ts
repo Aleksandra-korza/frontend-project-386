@@ -31,6 +31,7 @@ import type {
   FieldError,
   FieldErrorCode,
   MeetingType,
+  UpcomingBooking,
 } from './generated/index.ts'
 import {
   meetingTypeRuleErrors,
@@ -162,6 +163,22 @@ export function buildApp({
         now(),
         store.listBookedIntervals(),
       ),
+  )
+
+  app.get(
+    '/api/bookings',
+    {
+      schema: {
+        response: { 200: responseSchema('/api/bookings', 'get', 200) },
+      },
+    },
+    (): UpcomingBooking[] =>
+      store.listBookingsStartingAfter(now()).map((booking) => ({
+        ...booking,
+        // Тип бронирования существует: типы встреч не удаляются.
+        meetingTypeTitle:
+          store.getMeetingType(booking.meetingTypeId)?.title ?? '',
+      })),
   )
 
   app.post<{ Body: CreateBookingRequest }>(

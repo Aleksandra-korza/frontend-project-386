@@ -63,6 +63,26 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "listUpcomingBookings",
+        "description": "Предстоящие бронирования всех типов: только встречи, начало которых строго позже\nтекущего момента (BR-24), по возрастанию `startsAt`.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpcomingBooking"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/health": {
@@ -513,6 +533,57 @@
           }
         },
         "description": "Слот: возможный интервал встречи выбранного типа (docs/specs/booking.md §3)."
+      },
+      "UpcomingBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "meetingTypeId",
+          "startsAt",
+          "endsAt",
+          "guestName",
+          "guestEmail",
+          "createdAt",
+          "meetingTypeTitle"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор, генерирует сервер."
+          },
+          "meetingTypeId": {
+            "type": "string",
+            "description": "Тип встречи."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало, ISO 8601 со смещением Варшавы."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец: начало + длительность типа; вычисляет сервер."
+          },
+          "guestName": {
+            "type": "string",
+            "description": "Имя гостя после обрезки пробелов."
+          },
+          "guestEmail": {
+            "type": "string",
+            "description": "Email гостя."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Момент создания, ISO 8601 со смещением Варшавы."
+          },
+          "meetingTypeTitle": {
+            "type": "string",
+            "description": "Название типа встречи."
+          }
+        },
+        "description": "Предстоящее бронирование в списке владельца: бронирование и название его типа."
       }
     }
   }

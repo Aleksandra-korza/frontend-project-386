@@ -13,6 +13,8 @@ export type Store = {
   getMeetingType(id: string): MeetingType | undefined
   /** Интервалы всех бронирований любых типов (BR-16). */
   listBookedIntervals(): Interval[]
+  /** Бронирования, начало которых строго позже `after`, по возрастанию начала (BR-24). */
+  listBookingsStartingAfter(after: Temporal.Instant): Booking[]
   /**
    * Добавляет бронирование, если его интервал не пересекается ни с одним
    * бронированием любого типа; false — время занято. Проверка и вставка —
@@ -48,6 +50,19 @@ export function createStore(
       return meetingType && { ...meetingType }
     },
     listBookedIntervals: () => bookings.map(({ interval }) => interval),
+    listBookingsStartingAfter: (after) =>
+      bookings
+        .filter(
+          ({ interval }) =>
+            Temporal.Instant.compare(interval.startsAt, after) > 0,
+        )
+        .sort((first, second) =>
+          Temporal.Instant.compare(
+            first.interval.startsAt,
+            second.interval.startsAt,
+          ),
+        )
+        .map(({ booking }) => ({ ...booking })),
     addBookingIfFree: (booking) => {
       const interval = intervalOf(booking)
       // Линейный перебор: один владелец, окно 14 дней (ADR-0003).

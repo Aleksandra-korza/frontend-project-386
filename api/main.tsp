@@ -210,3 +210,19 @@ op createBooking(@body body: CreateBookingRequest): {
   @statusCode statusCode: 201;
   @body body: Booking;
 } | BadRequestError | NotFoundError | ConflictError;
+
+/** Предстоящее бронирование в списке владельца: бронирование и название его типа. */
+model UpcomingBooking {
+  ...Booking;
+
+  /** Название типа встречи. */
+  meetingTypeTitle: string;
+}
+
+/**
+ * Предстоящие бронирования всех типов: только встречи, начало которых строго позже
+ * текущего момента (BR-24), по возрастанию `startsAt`.
+ */
+@route("/api/bookings")
+@get
+op listUpcomingBookings(): UpcomingBooking[];
