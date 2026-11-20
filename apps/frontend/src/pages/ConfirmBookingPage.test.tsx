@@ -270,6 +270,53 @@ describe('подтверждение бронирования', () => {
     ).toBe(false)
   })
 
+  test('startsAt с другим смещением — тот же момент, слот найден', async () => {
+    stubApi(() => Response.json(booking, { status: 201 }))
+
+    const router = renderAt(
+      `/book/intro-call/confirm?${new URLSearchParams({ startsAt: '2026-11-23T09:00:00Z' }).toString()}`,
+    )
+
+    await screen.findByRole('button', { name: 'Подтвердить запись' })
+    expect(router.state.location.pathname).toBe('/book/intro-call/confirm')
+    within(screen.getByRole('complementary')).getByText('10:00–11:00')
+  })
+
+  test('SLOT_TAKEN для слота в UTC — возврат к местному дню часового пояса из ответа', async () => {
+    // Слот 00:00 по Варшаве 24 ноября записан в UTC: дата в строке — 23 ноября.
+    const utcStartsAt = '2026-11-23T23:00:00Z'
+    const withUtcSlot = (busy: Record<string, string[]> = {}) => {
+      const response = availability(busy)
+      const day = response.days.find(({ date }) => date === '2026-11-24')
+      day?.slots.unshift({
+        startsAt: utcStartsAt,
+        endsAt: '2026-11-24T00:00:00Z',
+        available: true,
+      })
+      return response
+    }
+    let current = withUtcSlot()
+    stubFetch({
+      '/api/meeting-types/intro-call': () => Response.json(meetingType),
+      '/api/meeting-types/intro-call/availability': () =>
+        Response.json(current),
+      '/api/bookings': () => {
+        current = withUtcSlot()
+        return errorResponse(409, { code: 'SLOT_TAKEN' })
+      },
+    })
+
+    const router = renderAt(
+      `/book/intro-call/confirm?${new URLSearchParams({ startsAt: utcStartsAt }).toString()}`,
+    )
+    await fillAndSubmit()
+
+    await screen.findByText('Это время уже заняли. Выберите другое.')
+    expect(new URLSearchParams(router.state.location.search).get('date')).toBe(
+      '2026-11-24',
+    )
+  })
+
   test('startsAt не начало слота — переход к выбору дня', async () => {
     stubApi(() => Response.json(booking, { status: 201 }))
 

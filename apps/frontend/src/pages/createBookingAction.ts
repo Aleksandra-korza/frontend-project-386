@@ -1,4 +1,5 @@
 import { data, redirect, type ActionFunctionArgs } from 'react-router'
+import { localDate } from '@/lib/dates'
 import {
   type Booking,
   createBooking,
@@ -33,10 +34,9 @@ export async function createBookingAction({
   const startsAt = text('startsAt')
 
   const backToDay = (reason: BackToDayReason) => {
-    const search = new URLSearchParams({
-      date: startsAt.slice(0, 10),
-      error: reason,
-    })
+    const search = new URLSearchParams({ error: reason })
+    const date = localDateOf(startsAt, text('timeZone'))
+    if (date) search.set('date', date)
     return redirect(
       `/book/${encodeURIComponent(meetingTypeId)}?${search.toString()}`,
     )
@@ -80,4 +80,16 @@ export async function createBookingAction({
     }
   }
   return { status: 'failed' }
+}
+
+/**
+ * Местный день начала слота в часовом поясе из ответа доступности (ADR-0004);
+ * undefined, если значения формы не момент и не часовой пояс.
+ */
+function localDateOf(startsAt: string, timeZone: string) {
+  try {
+    return localDate(startsAt, timeZone).toString()
+  } catch {
+    return undefined
+  }
 }

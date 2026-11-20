@@ -123,6 +123,7 @@ function ConfirmBookingPage() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <Form method="post" className="flex max-w-xl flex-col gap-4">
             <input type="hidden" name="startsAt" value={slot.startsAt} />
+            <input type="hidden" name="timeZone" value={timeZone} />
             <Field label="Имя" error={errorOf('guestName')}>
               {(props) => (
                 <input
