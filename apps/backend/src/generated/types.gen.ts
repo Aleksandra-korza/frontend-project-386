@@ -5,6 +5,27 @@ export type ClientOptions = {
 };
 
 /**
+ * Код ошибки ответа API.
+ */
+export type ErrorCode = 'VALIDATION_ERROR' | 'MEETING_TYPE_NOT_FOUND' | 'MEETING_TYPE_ID_TAKEN' | 'SLOT_TAKEN';
+
+export type ErrorResponse = {
+    code: ErrorCode;
+    message: string;
+    fieldErrors?: Array<FieldError>;
+};
+
+export type FieldError = {
+    field: string;
+    code: FieldErrorCode;
+};
+
+/**
+ * Код ошибки поля.
+ */
+export type FieldErrorCode = 'REQUIRED' | 'TOO_LONG' | 'INVALID_FORMAT' | 'OUT_OF_RANGE' | 'INVALID_SLOT';
+
+/**
  * Состояние backend.
  */
 export type HealthStatus = {
@@ -64,3 +85,32 @@ export type ListMeetingTypesResponses = {
 };
 
 export type ListMeetingTypesResponse = ListMeetingTypesResponses[keyof ListMeetingTypesResponses];
+
+export type CreateMeetingTypeData = {
+    body: MeetingType;
+    path?: never;
+    query?: never;
+    url: '/api/meeting-types';
+};
+
+export type CreateMeetingTypeErrors = {
+    /**
+     * Ошибка проверки запроса: `fieldErrors` перечисляет все поля с ошибками (docs/specs/booking.md §5).
+     */
+    400: ErrorResponse;
+    /**
+     * Конфликт с уже существующими данными.
+     */
+    409: ErrorResponse;
+};
+
+export type CreateMeetingTypeError = CreateMeetingTypeErrors[keyof CreateMeetingTypeErrors];
+
+export type CreateMeetingTypeResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: MeetingType;
+};
+
+export type CreateMeetingTypeResponse = CreateMeetingTypeResponses[keyof CreateMeetingTypeResponses];

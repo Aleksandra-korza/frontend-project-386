@@ -45,11 +45,115 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "createMeetingType",
+        "description": "Создание типа встречи владельцем; `title` и `description` обрезаются по краям, пустое описание = отсутствует.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ошибка проверки запроса: `fieldErrors` перечисляет все поля с ошибками (docs/specs/booking.md §5).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт с уже существующими данными.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeetingType"
+              }
+            }
+          }
+        }
       }
     }
   },
   "components": {
     "schemas": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_ERROR",
+          "MEETING_TYPE_NOT_FOUND",
+          "MEETING_TYPE_ID_TAKEN",
+          "SLOT_TAKEN"
+        ],
+        "description": "Код ошибки ответа API."
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string"
+          },
+          "fieldErrors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            }
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "required": [
+          "field",
+          "code"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "code": {
+            "$ref": "#/components/schemas/FieldErrorCode"
+          }
+        }
+      },
+      "FieldErrorCode": {
+        "type": "string",
+        "enum": [
+          "REQUIRED",
+          "TOO_LONG",
+          "INVALID_FORMAT",
+          "OUT_OF_RANGE",
+          "INVALID_SLOT"
+        ],
+        "description": "Код ошибки поля."
+      },
       "HealthStatus": {
         "type": "object",
         "required": [

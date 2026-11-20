@@ -63,4 +63,44 @@ describe('контракт OpenAPI', () => {
     expect(body).toHaveLength(2)
     expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
   })
+
+  test.each([
+    [
+      201,
+      { id: 'team-sync', title: 'Синхронизация', durationMinutes: 45 },
+      undefined,
+    ],
+    [
+      400,
+      { id: 'Bad Id', title: ' ', description: 1, durationMinutes: 20 },
+      'VALIDATION_ERROR',
+    ],
+    [400, '{', 'VALIDATION_ERROR'],
+    [
+      409,
+      { id: 'intro-call', title: 'Знакомство', durationMinutes: 30 },
+      'MEETING_TYPE_ID_TAKEN',
+    ],
+  ])(
+    'POST /api/meeting-types: ответ %i соответствует контракту',
+    async (status, payload, code) => {
+      const validate = ajv.compile({
+        $ref: responseSchemaRef('/api/meeting-types', 'post', String(status)),
+      })
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/meeting-types',
+        headers: { 'content-type': 'application/json' },
+        payload:
+          typeof payload === 'string' ? payload : JSON.stringify(payload),
+      })
+
+      expect(response.statusCode).toBe(status)
+      expect(response.headers['content-type']).toMatch(/^application\/json/)
+      const body = response.json<{ code?: string }>()
+      expect(body.code).toBe(code)
+      expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
+    },
+  )
 })

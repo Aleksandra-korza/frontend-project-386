@@ -5,6 +5,8 @@ import type { MeetingType } from './generated/index.ts'
 export type Store = {
   /** Типы встреч в порядке создания, старые первыми. */
   listMeetingTypes(): MeetingType[]
+  /** Добавляет тип встречи в конец каталога; false — `id` уже занят. */
+  addMeetingType(meetingType: MeetingType): boolean
 }
 
 export function createStore(
@@ -15,5 +17,10 @@ export function createStore(
   return {
     listMeetingTypes: () =>
       meetingTypes.map((meetingType) => ({ ...meetingType })),
+    addMeetingType: (meetingType) => {
+      if (meetingTypes.some(({ id }) => id === meetingType.id)) return false
+      meetingTypes.push({ ...meetingType })
+      return true
+    },
   }
 }

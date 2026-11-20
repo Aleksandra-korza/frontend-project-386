@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 // Сгенерированный контракт (mise run codegen). Маршруты регистрируются вручную,
 // а схемы запросов и ответов берутся из него (ADR-0005).
 type Operation = {
+  requestBody?: { content: Record<string, { schema: unknown } | undefined> }
   responses: Record<
     string,
     { content?: Record<string, { schema: unknown } | undefined> } | undefined
@@ -50,6 +51,19 @@ export function responseSchema(path: string, method: string, status: number) {
   if (schema === undefined) {
     throw new Error(
       `В контракте нет ответа ${status} для ${method.toUpperCase()} ${path}`,
+    )
+  }
+  return withAbsoluteRefs(schema)
+}
+
+/** JSON-схема тела запроса операции из контракта; ошибка, если её там нет. */
+export function requestBodySchema(path: string, method: string) {
+  const schema =
+    openapi.paths[path]?.[method]?.requestBody?.content['application/json']
+      ?.schema
+  if (schema === undefined) {
+    throw new Error(
+      `В контракте нет тела запроса для ${method.toUpperCase()} ${path}`,
     )
   }
   return withAbsoluteRefs(schema)
