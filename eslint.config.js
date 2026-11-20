@@ -52,7 +52,12 @@ export default defineConfig([
   {
     name: 'project/frontend',
     files: ['apps/frontend/**/*.{ts,tsx}'],
-    extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite()],
+    extends: [
+      reactHooks.configs.flat.recommended,
+      // buttonVariants — стандартный экспорт компонента shadcn/ui Button,
+      // его импортируют другие компоненты shadcn.
+      reactRefresh.configs.vite({ allowExportNames: ['buttonVariants'] }),
+    ],
     languageOptions: {
       globals: globals.browser,
     },

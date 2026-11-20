@@ -1,30 +1,19 @@
-import { useEffect, useState } from 'react'
-import { getHealth } from '@/client'
+import { Outlet } from 'react-router'
+import ServiceStatus from '@/components/ServiceStatus'
+import SiteHeader from '@/components/SiteHeader'
 
-type ApiState = 'loading' | 'ok' | 'error'
-
-const apiStateLabel: Record<ApiState, string> = {
-  loading: 'проверка…',
-  ok: 'доступен',
-  error: 'недоступен',
-}
-
+// Макет всех страниц: шапка, страница, подвал со статусом сервиса.
 function App() {
-  const [apiState, setApiState] = useState<ApiState>('loading')
-
-  useEffect(() => {
-    // Сгенерированный SDK (apps/frontend/src/client); в dev-режиме /api проксирует Vite.
-    getHealth()
-      .then(({ data }) => setApiState(data?.status === 'ok' ? 'ok' : 'error'))
-      .catch(() => setApiState('error'))
-  }, [])
-
   return (
-    <main>
-      <h1>Календарь звонков</h1>
-      <p>Каркас приложения. Функциональность появится на следующих этапах.</p>
-      <p>API: {apiStateLabel[apiState]}</p>
-    </main>
+    <div className="bg-page flex min-h-svh flex-col">
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
+        <Outlet />
+      </main>
+      <footer className="mx-auto w-full max-w-6xl px-4 pb-6 text-xs text-muted-foreground sm:px-6">
+        <ServiceStatus />
+      </footer>
+    </div>
   )
 }
 

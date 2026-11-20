@@ -55,8 +55,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Оранжевый акцент, как в демо (docs/specs/home-page.md, Q9). */
+  --primary: oklch(0.68 0.17 50);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -66,7 +67,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.75 0.13 50);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -127,4 +128,20 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Фон страниц: мягкий сине-оранжевый градиент, как в демо (Q9). */
+@utility bg-page {
+  background:
+    radial-gradient(
+      60rem 40rem at 10% 0%,
+      oklch(0.88 0.06 265 / 0.75),
+      transparent 70%
+    ),
+    radial-gradient(
+      50rem 35rem at 90% 0%,
+      oklch(0.94 0.04 60 / 0.8),
+      transparent 70%
+    ),
+    var(--background);
 }
