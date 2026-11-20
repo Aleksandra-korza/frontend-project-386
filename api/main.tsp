@@ -87,7 +87,7 @@ model BadRequestError {
   @bodyRoot body: ErrorResponse;
 }
 
-/** Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`. */
+/** Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN` или `SLOT_TAKEN`. */
 @error
 model ConflictError {
   @statusCode statusCode: 409;
@@ -153,3 +153,60 @@ model MeetingTypeAvailability {
 op getMeetingTypeAvailability(
   @path id: string,
 ): MeetingTypeAvailability | NotFoundError;
+
+/** Данные гостя и выбранный слот для бронирования (docs/specs/booking.md §2). */
+model CreateBookingRequest {
+  /** Идентификатор существующего типа встречи. */
+  @minLength(1)
+  meetingTypeId: string;
+
+  /** Начало допустимого слота этого типа, ISO 8601 со смещением. */
+  startsAt: offsetDateTime;
+
+  /** Имя гостя: пробелы по краям обрезаются; 1–100 символов после обрезки (BR-21). */
+  @minLength(1)
+  @maxLength(100)
+  guestName: string;
+
+  /** Email гостя. */
+  @maxLength(254)
+  @format("email")
+  guestEmail: string;
+}
+
+/** Бронирование: встреча гостя с владельцем, закреплённая за конкретным временем. */
+model Booking {
+  /** Идентификатор, генерирует сервер. */
+  id: string;
+
+  /** Тип встречи. */
+  meetingTypeId: string;
+
+  /** Начало, ISO 8601 со смещением Варшавы. */
+  startsAt: offsetDateTime;
+
+  /** Конец: начало + длительность типа; вычисляет сервер. */
+  endsAt: offsetDateTime;
+
+  /** Имя гостя после обрезки пробелов. */
+  guestName: string;
+
+  /** Email гостя. */
+  guestEmail: string;
+
+  /** Момент создания, ISO 8601 со смещением Варшавы. */
+  createdAt: offsetDateTime;
+}
+
+/**
+ * Создание бронирования гостем (ADR-0003). Порядок проверок: тип встречи
+ * (`404 MEETING_TYPE_NOT_FOUND`) → поля (`400 VALIDATION_ERROR`, для `startsAt` —
+ * `INVALID_FORMAT` или `INVALID_SLOT`) → пересечение с бронированием любого типа
+ * (`409 SLOT_TAKEN`).
+ */
+@route("/api/bookings")
+@post
+op createBooking(@body body: CreateBookingRequest): {
+  @statusCode statusCode: 201;
+  @body body: Booking;
+} | BadRequestError | NotFoundError | ConflictError;

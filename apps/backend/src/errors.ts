@@ -68,7 +68,8 @@ export function mergeFieldErrors(...lists: FieldError[][]): FieldError[] {
 }
 
 // Ключевое слово JSON Schema → код ошибки поля (таблица «Ошибки полей», §5).
-// Длина поля с шаблоном или форматом (`id`) — часть формата, а не TOO_LONG.
+// Длина поля с шаблоном (`id`) — часть формата, а не TOO_LONG; у поля с форматом
+// (`guestEmail`) превышение максимума — TOO_LONG (§5).
 function fieldErrorCode(
   error: FastifySchemaValidationError & { parentSchema?: unknown },
 ): FieldErrorCode | undefined {
@@ -76,7 +77,8 @@ function fieldErrorCode(
     pattern?: string
     format?: string
   }
-  const hasFormat = schema.pattern !== undefined || schema.format !== undefined
+  const hasPattern = schema.pattern !== undefined
+  const hasFormat = hasPattern || schema.format !== undefined
   const limit = (error.params as { limit?: number }).limit ?? 0
   switch (error.keyword) {
     case 'required':
@@ -89,7 +91,7 @@ function fieldErrorCode(
     case 'minLength':
       return !hasFormat && limit <= 1 ? 'REQUIRED' : 'INVALID_FORMAT'
     case 'maxLength':
-      return hasFormat ? 'INVALID_FORMAT' : 'TOO_LONG'
+      return hasPattern ? 'INVALID_FORMAT' : 'TOO_LONG'
     case 'minimum':
     case 'maximum':
     case 'multipleOf':

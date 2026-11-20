@@ -1,4 +1,5 @@
 import { Ajv } from 'ajv'
+import { Temporal } from 'temporal-polyfill'
 import { afterAll, describe, expect, test } from 'vitest'
 import { buildApp } from './app.ts'
 import { openapi } from './contract.ts'
@@ -30,6 +31,8 @@ const responseSchemaRef = (path: string, method: string, status: string) =>
 describe('контракт OpenAPI', () => {
   const app = buildApp({
     store: createStore({ meetingTypes: sampleMeetingTypes }),
+    // Окно бронирования — 2026-11-21…2026-12-04.
+    now: () => Temporal.Instant.from('2026-11-20T14:00:00Z'),
   })
 
   afterAll(async () => {
@@ -138,6 +141,44 @@ describe('контракт OpenAPI', () => {
         headers: { 'content-type': 'application/json' },
         payload:
           typeof payload === 'string' ? payload : JSON.stringify(payload),
+      })
+
+      expect(response.statusCode).toBe(status)
+      expect(response.headers['content-type']).toMatch(/^application\/json/)
+      const body = response.json<{ code?: string }>()
+      expect(body.code).toBe(code)
+      expect(validate(body), ajv.errorsText(validate.errors)).toBe(true)
+    },
+  )
+
+  // Порядок важен: 409 — повтор бронирования из первого случая.
+  const booking = {
+    meetingTypeId: 'intro-call',
+    startsAt: '2026-11-23T10:00:00+01:00',
+    guestName: 'Анна',
+    guestEmail: 'anna@example.com',
+  }
+  test.each([
+    [201, booking, undefined],
+    [
+      400,
+      { ...booking, startsAt: '2026-11-23T10:15:00+01:00', guestName: '' },
+      'VALIDATION_ERROR',
+    ],
+    [404, { ...booking, meetingTypeId: 'unknown' }, 'MEETING_TYPE_NOT_FOUND'],
+    [409, booking, 'SLOT_TAKEN'],
+  ])(
+    'POST /api/bookings: ответ %i соответствует контракту',
+    async (status, payload, code) => {
+      const validate = ajv.compile({
+        $ref: responseSchemaRef('/api/bookings', 'post', String(status)),
+      })
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/bookings',
+        headers: { 'content-type': 'application/json' },
+        payload: JSON.stringify(payload),
       })
 
       expect(response.statusCode).toBe(status)

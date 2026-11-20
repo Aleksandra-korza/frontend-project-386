@@ -1,9 +1,17 @@
+import { randomUUID } from 'node:crypto'
 import Fastify, {
   type FastifySchemaValidationError,
   type FastifyServerOptions,
 } from 'fastify'
 import { Temporal } from 'temporal-polyfill'
-import { meetingTypeAvailability } from './availability.ts'
+import {
+  findSlot,
+  meetingTypeAvailability,
+  type Slot,
+  TIME_ZONE,
+  toApiDateTime,
+} from './availability.ts'
+import { normalizeBookingInput } from './bookings.ts'
 import {
   openapiComponentsSchema,
   requestBodySchema,
@@ -17,7 +25,13 @@ import {
   registerErrorHandler,
   validationError,
 } from './errors.ts'
-import type { MeetingType } from './generated/index.ts'
+import type {
+  Booking,
+  CreateBookingRequest,
+  FieldError,
+  FieldErrorCode,
+  MeetingType,
+} from './generated/index.ts'
 import {
   meetingTypeRuleErrors,
   normalizeMeetingTypeInput,
@@ -146,8 +160,88 @@ export function buildApp({
       meetingTypeAvailability(
         findMeetingType(request.params.id).durationMinutes,
         now(),
+        store.listBookedIntervals(),
       ),
   )
+
+  app.post<{ Body: CreateBookingRequest }>(
+    '/api/bookings',
+    {
+      attachValidation: true,
+      schema: {
+        body: requestBodySchema('/api/bookings', 'post'),
+        response: { 201: responseSchema('/api/bookings', 'post', 201) },
+      },
+      preValidation: (request, _reply, done) => {
+        request.body = normalizeBookingInput(request.body)
+        done()
+      },
+    },
+    async (request, reply) => {
+      // Порядок проверок — ADR-0003: тип → поля гостя и startsAt → пересечения.
+      const body = request.body as Partial<Record<string, unknown>> | undefined
+      const meetingTypeId = body?.meetingTypeId
+      const meetingType =
+        typeof meetingTypeId === 'string' && meetingTypeId !== ''
+          ? findMeetingType(meetingTypeId)
+          : undefined
+
+      const schemaErrors = fieldErrorsFromSchema(
+        request.validationError?.validation as
+          FastifySchemaValidationError[] | undefined,
+      )
+      const slot =
+        meetingType &&
+        typeof body?.startsAt === 'string' &&
+        !schemaErrors.some(({ field }) => field === 'startsAt')
+          ? slotStartingAt(meetingType.durationMinutes, body.startsAt)
+          : undefined
+      const slotErrors: FieldError[] =
+        typeof slot === 'string' ? [{ field: 'startsAt', code: slot }] : []
+      const fieldErrors = mergeFieldErrors(schemaErrors, slotErrors)
+      if (
+        request.validationError ||
+        fieldErrors.length > 0 ||
+        typeof slot !== 'object'
+      ) {
+        throw validationError(fieldErrors)
+      }
+
+      const booking: Booking = {
+        id: randomUUID(),
+        meetingTypeId: request.body.meetingTypeId,
+        startsAt: toApiDateTime(slot.startsAt),
+        endsAt: toApiDateTime(slot.endsAt),
+        guestName: request.body.guestName,
+        guestEmail: request.body.guestEmail,
+        createdAt: toApiDateTime(now().toZonedDateTimeISO(TIME_ZONE)),
+      }
+      // Проверка пересечений и вставка — одна синхронная операция (ADR-0003).
+      if (!store.addBookingIfFree(booking)) {
+        throw new ApiError(
+          409,
+          'SLOT_TAKEN',
+          'The selected time is already booked',
+        )
+      }
+      return reply.code(201).send(booking)
+    },
+  )
+
+  // Слот типа, начинающийся в `startsAt`, той же функцией сетки, что и доступность;
+  // иначе — ошибка поля: строка не момент времени или не начало допустимого слота.
+  function slotStartingAt(
+    durationMinutes: number,
+    startsAt: string,
+  ): Slot | FieldErrorCode {
+    let instant: Temporal.Instant
+    try {
+      instant = Temporal.Instant.from(startsAt)
+    } catch {
+      return 'INVALID_FORMAT'
+    }
+    return findSlot(durationMinutes, now(), instant) ?? 'INVALID_SLOT'
+  }
 
   return app
 }

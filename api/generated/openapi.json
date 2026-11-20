@@ -6,6 +6,65 @@
   },
   "tags": [],
   "paths": {
+    "/api/bookings": {
+      "post": {
+        "operationId": "createBooking",
+        "description": "Создание бронирования гостем (ADR-0003). Порядок проверок: тип встречи\n(`404 MEETING_TYPE_NOT_FOUND`) → поля (`400 VALIDATION_ERROR`, для `startsAt` —\n`INVALID_FORMAT` или `INVALID_SLOT`) → пересечение с бронированием любого типа\n(`409 SLOT_TAKEN`).",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ошибка проверки запроса `VALIDATION_ERROR`: `fieldErrors` перечисляет все поля с ошибками.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN` или `SLOT_TAKEN`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingRequest"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "getHealth",
@@ -72,7 +131,7 @@
             }
           },
           "409": {
-            "description": "Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`.",
+            "description": "Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN` или `SLOT_TAKEN`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -194,6 +253,52 @@
         },
         "description": "День окна бронирования и все слоты выбранного типа."
       },
+      "Booking": {
+        "type": "object",
+        "required": [
+          "id",
+          "meetingTypeId",
+          "startsAt",
+          "endsAt",
+          "guestName",
+          "guestEmail",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор, генерирует сервер."
+          },
+          "meetingTypeId": {
+            "type": "string",
+            "description": "Тип встречи."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало, ISO 8601 со смещением Варшавы."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Конец: начало + длительность типа; вычисляет сервер."
+          },
+          "guestName": {
+            "type": "string",
+            "description": "Имя гостя после обрезки пробелов."
+          },
+          "guestEmail": {
+            "type": "string",
+            "description": "Email гостя."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Момент создания, ISO 8601 со смещением Варшавы."
+          }
+        },
+        "description": "Бронирование: встреча гостя с владельцем, закреплённая за конкретным временем."
+      },
       "BookingWindow": {
         "type": "object",
         "required": [
@@ -213,6 +318,40 @@
           }
         },
         "description": "Окно бронирования: местные дни Варшавы, 14 дней, начиная с завтрашнего (BR-01)."
+      },
+      "CreateBookingRequest": {
+        "type": "object",
+        "required": [
+          "meetingTypeId",
+          "startsAt",
+          "guestName",
+          "guestEmail"
+        ],
+        "properties": {
+          "meetingTypeId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Идентификатор существующего типа встречи."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Начало допустимого слота этого типа, ISO 8601 со смещением."
+          },
+          "guestName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Имя гостя: пробелы по краям обрезаются; 1–100 символов после обрезки (BR-21)."
+          },
+          "guestEmail": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "description": "Email гостя."
+          }
+        },
+        "description": "Данные гостя и выбранный слот для бронирования (docs/specs/booking.md §2)."
       },
       "ErrorCode": {
         "type": "string",

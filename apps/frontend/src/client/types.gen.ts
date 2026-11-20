@@ -16,6 +16,40 @@ export type AvailabilityDay = {
 };
 
 /**
+ * Бронирование: встреча гостя с владельцем, закреплённая за конкретным временем.
+ */
+export type Booking = {
+    /**
+     * Идентификатор, генерирует сервер.
+     */
+    id: string;
+    /**
+     * Тип встречи.
+     */
+    meetingTypeId: string;
+    /**
+     * Начало, ISO 8601 со смещением Варшавы.
+     */
+    startsAt: string;
+    /**
+     * Конец: начало + длительность типа; вычисляет сервер.
+     */
+    endsAt: string;
+    /**
+     * Имя гостя после обрезки пробелов.
+     */
+    guestName: string;
+    /**
+     * Email гостя.
+     */
+    guestEmail: string;
+    /**
+     * Момент создания, ISO 8601 со смещением Варшавы.
+     */
+    createdAt: string;
+};
+
+/**
  * Окно бронирования: местные дни Варшавы, 14 дней, начиная с завтрашнего (BR-01).
  */
 export type BookingWindow = {
@@ -27,6 +61,28 @@ export type BookingWindow = {
      * Последний день окна.
      */
     to: string;
+};
+
+/**
+ * Данные гостя и выбранный слот для бронирования (docs/specs/booking.md §2).
+ */
+export type CreateBookingRequest = {
+    /**
+     * Идентификатор существующего типа встречи.
+     */
+    meetingTypeId: string;
+    /**
+     * Начало допустимого слота этого типа, ISO 8601 со смещением.
+     */
+    startsAt: string;
+    /**
+     * Имя гостя: пробелы по краям обрезаются; 1–100 символов после обрезки (BR-21).
+     */
+    guestName: string;
+    /**
+     * Email гостя.
+     */
+    guestEmail: string;
 };
 
 /**
@@ -112,6 +168,39 @@ export type Slot = {
     available: boolean;
 };
 
+export type CreateBookingData = {
+    body: CreateBookingRequest;
+    path?: never;
+    query?: never;
+    url: '/api/bookings';
+};
+
+export type CreateBookingErrors = {
+    /**
+     * Ошибка проверки запроса `VALIDATION_ERROR`: `fieldErrors` перечисляет все поля с ошибками.
+     */
+    400: ErrorResponse;
+    /**
+     * Тип встречи не найден: `MEETING_TYPE_NOT_FOUND`.
+     */
+    404: ErrorResponse;
+    /**
+     * Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN` или `SLOT_TAKEN`.
+     */
+    409: ErrorResponse;
+};
+
+export type CreateBookingError = CreateBookingErrors[keyof CreateBookingErrors];
+
+export type CreateBookingResponses = {
+    /**
+     * The request has succeeded and a new resource has been created as a result.
+     */
+    201: Booking;
+};
+
+export type CreateBookingResponse = CreateBookingResponses[keyof CreateBookingResponses];
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -157,7 +246,7 @@ export type CreateMeetingTypeErrors = {
      */
     400: ErrorResponse;
     /**
-     * Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN`.
+     * Конфликт с существующими данными: `MEETING_TYPE_ID_TAKEN` или `SLOT_TAKEN`.
      */
     409: ErrorResponse;
 };

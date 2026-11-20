@@ -1,4 +1,5 @@
 import { Temporal } from 'temporal-polyfill'
+import { overlaps, type Interval } from './bookings.ts'
 import type { MeetingTypeAvailability } from './generated/index.ts'
 
 // Окно бронирования и сетка слотов (docs/specs/booking.md §3, ADR-0004).
@@ -47,13 +48,17 @@ export function buildSchedule(
 }
 
 /** Время слота в API: ISO 8601 со смещением Варшавы, без имени зоны. */
-const toApiDateTime = (value: Temporal.ZonedDateTime) =>
+export const toApiDateTime = (value: Temporal.ZonedDateTime) =>
   value.toString({ timeZoneName: 'never' })
 
-/** Ответ getMeetingTypeAvailability. Бронирований пока нет — все слоты свободны. */
+/**
+ * Ответ getMeetingTypeAvailability: слот свободен, если не пересекается
+ * ни с одним бронированием любого типа (BR-12, BR-16).
+ */
 export function meetingTypeAvailability(
   durationMinutes: number,
   now: Temporal.Instant,
+  bookedIntervals: Interval[] = [],
 ): MeetingTypeAvailability {
   const { window, days } = buildSchedule(durationMinutes, now)
   return {
@@ -64,7 +69,12 @@ export function meetingTypeAvailability(
       slots: slots.map(({ startsAt, endsAt }) => ({
         startsAt: toApiDateTime(startsAt),
         endsAt: toApiDateTime(endsAt),
-        available: true,
+        available: !bookedIntervals.some((booked) =>
+          overlaps(booked, {
+            startsAt: startsAt.toInstant(),
+            endsAt: endsAt.toInstant(),
+          }),
+        ),
       })),
     })),
   }
