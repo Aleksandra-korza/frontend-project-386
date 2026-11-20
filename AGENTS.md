@@ -9,7 +9,8 @@ pnpm-монорепозиторий (`apps/*`):
 - `apps/backend` — API на Fastify + TypeScript, все маршруты под `/api`. Фабрика приложения `src/app.ts` (`buildApp()`), запуск сервера `src/server.ts`.
 - `apps/frontend` — React + Vite + TypeScript, Tailwind CSS 4, shadcn/ui. В dev-режиме `/api` проксируется на backend.
 - `api/` — контракт API на TypeSpec (`main.tsp`). Из него генерируются OpenAPI (`api/generated/openapi.json`) и клиентский SDK frontend (`apps/frontend/src/client`, генератор `@hey-api/openapi-ts`).
-- `docs/` — требования, ТЗ, исследование стека, макеты.
+- `docs/` — требования (`requirements.md`), ТЗ (`task.md`), исследование стека, макеты (`reference/`), спецификации фич (`specs/`), архитектурные решения (`adr/`) и открытые вопросы следующих этапов (`open-questions.md`).
+- `GLOSSARY.md` — словарь терминов предметной области; используйте его термины в коде, задачах и документах.
 
 ## Окружение и установка
 
