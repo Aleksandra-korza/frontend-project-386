@@ -1,9 +1,15 @@
 import { Temporal } from 'temporal-polyfill'
 import { overlaps, type Interval } from './bookings.ts'
-import type { Booking, MeetingType } from './generated/index.ts'
+import type {
+  Booking,
+  MeetingType,
+  UpcomingBooking,
+} from './generated/index.ts'
 
 // Данные сервиса в памяти процесса (D-06). Тесты передают заполненное
 // хранилище в buildApp() — без тестовых эндпоинтов.
+// Инвариант: тип каждого бронирования существует (типы встреч не удаляются);
+// нарушение — ошибка программы, а не ответ API.
 export type Store = {
   /** Типы встреч в порядке создания, старые первыми. */
   listMeetingTypes(): MeetingType[]
@@ -13,10 +19,13 @@ export type Store = {
   getMeetingType(id: string): MeetingType | undefined
   /** Интервалы всех бронирований любых типов (BR-16). */
   listBookedIntervals(): Interval[]
-  /** Бронирования, начало которых строго позже `after`, по возрастанию начала (BR-24). */
-  listBookingsStartingAfter(after: Temporal.Instant): Booking[]
   /**
-   * Добавляет бронирование, если его интервал не пересекается ни с одним
+   * Бронирования с названием типа, начало которых строго позже `after`,
+   * по возрастанию начала (BR-24).
+   */
+  listUpcomingBookings(after: Temporal.Instant): UpcomingBooking[]
+  /**
+   * Добавляет бронирование существующего типа, если его интервал не пересекается ни с одним
    * бронированием любого типа; false — время занято. Проверка и вставка —
    * одна синхронная операция (ADR-0003): никаких `await` внутри.
    */
@@ -32,8 +41,20 @@ export function createStore(
   initial: { meetingTypes?: MeetingType[]; bookings?: Booking[] } = {},
 ): Store {
   const meetingTypes = [...(initial.meetingTypes ?? [])]
+  const findMeetingType = (id: string) =>
+    meetingTypes.find((candidate) => candidate.id === id)
+  const meetingTypeOf = (booking: Booking) => {
+    const meetingType = findMeetingType(booking.meetingTypeId)
+    if (!meetingType) {
+      throw new Error(
+        `Booking "${booking.id}" references unknown meeting type "${booking.meetingTypeId}"`,
+      )
+    }
+    return meetingType
+  }
   const bookings = (initial.bookings ?? []).map((booking) => ({
     booking: { ...booking },
+    meetingTypeTitle: meetingTypeOf(booking).title,
     interval: intervalOf(booking),
   }))
 
@@ -46,11 +67,11 @@ export function createStore(
       return true
     },
     getMeetingType: (id) => {
-      const meetingType = meetingTypes.find((candidate) => candidate.id === id)
+      const meetingType = findMeetingType(id)
       return meetingType && { ...meetingType }
     },
     listBookedIntervals: () => bookings.map(({ interval }) => interval),
-    listBookingsStartingAfter: (after) =>
+    listUpcomingBookings: (after) =>
       bookings
         .filter(
           ({ interval }) =>
@@ -62,14 +83,18 @@ export function createStore(
             second.interval.startsAt,
           ),
         )
-        .map(({ booking }) => ({ ...booking })),
+        .map(({ booking, meetingTypeTitle }) => ({
+          ...booking,
+          meetingTypeTitle,
+        })),
     addBookingIfFree: (booking) => {
+      const { title: meetingTypeTitle } = meetingTypeOf(booking)
       const interval = intervalOf(booking)
       // Линейный перебор: один владелец, окно 14 дней (ADR-0003).
       if (bookings.some((stored) => overlaps(stored.interval, interval))) {
         return false
       }
-      bookings.push({ booking: { ...booking }, interval })
+      bookings.push({ booking: { ...booking }, meetingTypeTitle, interval })
       return true
     },
   }

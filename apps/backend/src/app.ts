@@ -169,13 +169,7 @@ export function buildApp({
         response: responseSchemas('/api/bookings', 'get', [200]),
       },
     },
-    (): UpcomingBooking[] =>
-      store.listBookingsStartingAfter(now()).map((booking) => ({
-        ...booking,
-        // Тип бронирования существует: типы встреч не удаляются.
-        meetingTypeTitle:
-          store.getMeetingType(booking.meetingTypeId)?.title ?? '',
-      })),
+    (): UpcomingBooking[] => store.listUpcomingBookings(now()),
   )
 
   app.post<{ Body: CreateBookingRequest }>(

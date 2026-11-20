@@ -181,3 +181,20 @@ describe('GET /api/bookings', () => {
     ])
   })
 })
+
+test('бронирование неизвестного типа нарушает инвариант хранилища', () => {
+  // Типы встреч не удаляются: у каждого бронирования есть тип с названием.
+  expect(() =>
+    createStore({
+      meetingTypes: sampleMeetingTypes,
+      bookings: [
+        booking(
+          'orphan',
+          'deleted-type',
+          '2026-11-23T10:00:00+01:00',
+          '2026-11-23T10:30:00+01:00',
+        ),
+      ],
+    }),
+  ).toThrow('deleted-type')
+})
