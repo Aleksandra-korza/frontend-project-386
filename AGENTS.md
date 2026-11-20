@@ -38,6 +38,16 @@ mise daemons restart
 mise daemons stop
 ```
 
+Production-образ (`Dockerfile`, `docs/specs/deploy.md` §3; нужен Docker):
+
+```sh
+mise run docker-build   # образ calendar-calls
+mise run docker-run     # контейнер: http://localhost:4000 (API и frontend на одном порту)
+mise run docker-smoke   # сборка + проверка двух контейнеров (PORT по умолчанию и 10000) на портах 14000/15000
+```
+
+`.dockerignore` — белый список: новый нужный для сборки путь добавьте в него явно. Порт `3000` не используйте.
+
 ## Проверки и сборка
 
 ```sh
