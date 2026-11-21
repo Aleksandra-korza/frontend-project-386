@@ -1,0 +1,33 @@
+# Релизы через release-please (задача #18, исследование — ветка research/release-please).
+# На каждый push в main action обновляет Release PR с версией и CHANGELOG.md
+# по Conventional Commits; слияние Release PR создаёт тег vX.Y.Z и GitHub Release.
+# Конфигурация: release-please-config.json и .release-please-manifest.json.
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  # Не прерывать начатое создание релиза или тега.
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # коммиты в ветку Release PR, теги, GitHub Release
+      pull-requests: write # создание и обновление Release PR
+      issues: write # метки autorelease: pending / tagged
+    steps:
+      # Стандартный GITHUB_TOKEN: Release PR и тег не запускают другие workflow,
+      # проверки (check, hexlet-check) пройдут на push в main после слияния Release PR.
+      - name: Release Please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
