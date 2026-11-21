@@ -1,0 +1,15 @@
+# Render Blueprint (docs/specs/deploy.md §5, ADR-0006): один бесплатный Web Service
+# из Dockerfile в корне. Спецификация: https://render.com/docs/blueprint-spec
+# Секретов и переменных окружения нет: PORT задаёт Render (10000), HOST=0.0.0.0 и
+# NODE_ENV=production заданы в образе.
+services:
+  - type: web
+    name: calendar-calls
+    runtime: docker
+    plan: free
+    # Регион нельзя изменить после создания сервиса.
+    region: frankfurt
+    branch: main
+    # Деплой только после зелёных CI-проверок коммита в main.
+    autoDeployTrigger: checksPass
+    healthCheckPath: /api/health

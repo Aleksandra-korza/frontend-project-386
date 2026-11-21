@@ -138,3 +138,25 @@ jobs:
             e2e/playwright-report/
             e2e/test-results/
           retention-days: 14
+
+  # Production-образ (docs/specs/deploy.md §4): scripts/docker-smoke.sh собирает
+  # Dockerfile и проверяет контейнеры с PORT по умолчанию и PORT=10000 —
+  # /api/health, /, /book и содержимое образа; при падении печатает логи
+  # контейнеров. Node.js и зависимости на раннере не нужны: всё внутри образа.
+  docker:
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
+        with:
+          version: 2026.11.9
+
+      - name: Docker smoke
+        run: mise run docker-smoke

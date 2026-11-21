@@ -376,6 +376,7 @@
       "ErrorCode": {
         "type": "string",
         "enum": [
+          "NOT_FOUND",
           "VALIDATION_ERROR",
           "MEETING_TYPE_NOT_FOUND",
           "MEETING_TYPE_ID_TAKEN",

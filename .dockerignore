@@ -1,0 +1,18 @@
+# Белый список (docs/specs/deploy.md §3): в контекст сборки попадает только нужное
+# для Dockerfile. Всё остальное (.git, node_modules, .env*, .claude/, личные и прочие
+# неотслеживаемые файлы) исключено правилом «*».
+*
+
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!e2e/package.json
+!api/generated/
+!apps/
+
+# Внутри разрешённых каталогов — без артефактов и локальных файлов.
+**/node_modules
+**/dist
+**/.env*
+**/*.tsbuildinfo
+**/.DS_Store

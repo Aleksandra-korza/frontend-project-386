@@ -88,7 +88,7 @@ export type CreateBookingRequest = {
 /**
  * Код ошибки ответа API.
  */
-export type ErrorCode = 'VALIDATION_ERROR' | 'MEETING_TYPE_NOT_FOUND' | 'MEETING_TYPE_ID_TAKEN' | 'SLOT_TAKEN';
+export type ErrorCode = 'NOT_FOUND' | 'VALIDATION_ERROR' | 'MEETING_TYPE_NOT_FOUND' | 'MEETING_TYPE_ID_TAKEN' | 'SLOT_TAKEN';
 
 export type ErrorResponse = {
     code: ErrorCode;
