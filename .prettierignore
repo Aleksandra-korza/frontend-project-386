@@ -8,6 +8,10 @@ coverage/
 # Lock-файл генерируется pnpm
 pnpm-lock.yaml
 
+# Манифест версий пишет release-please (Release PR) в своём формате: {".":"0.1.0"}.
+# CHANGELOG.md уже исключён правилом /*.md ниже.
+.release-please-manifest.json
+
 # Сгенерированный файл Hexlet — изменять запрещено
 .github/workflows/hexlet-check.yml
 
