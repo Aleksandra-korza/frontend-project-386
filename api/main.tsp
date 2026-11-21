@@ -47,6 +47,8 @@ op listMeetingTypes(): MeetingType[];
 
 /** Код ошибки ответа API. */
 enum ErrorCode {
+  /** Адрес `/api/*` без маршрута. */
+  NOT_FOUND,
   VALIDATION_ERROR,
   MEETING_TYPE_NOT_FOUND,
   MEETING_TYPE_ID_TAKEN,

@@ -33,6 +33,7 @@ import type {
   MeetingType,
   UpcomingBooking,
 } from './generated/index.ts'
+import { registerFrontend } from './frontend.ts'
 import {
   meetingTypeRuleErrors,
   normalizeMeetingTypeInput,
@@ -47,6 +48,8 @@ export type AppOptions = FastifyServerOptions & {
   store?: Store
   /** Часы: текущий момент; по умолчанию — системные (ADR-0004, п. 5). */
   now?: () => Temporal.Instant
+  /** Каталог собранного frontend; без него (тесты, dev через Vite) статики нет. */
+  staticDir?: string
 }
 
 // Фабрика приложения отделена от запуска сервера,
@@ -54,6 +57,7 @@ export type AppOptions = FastifyServerOptions & {
 export function buildApp({
   store = createStore(),
   now = () => Temporal.Now.instant(),
+  staticDir,
   ...options
 }: AppOptions = {}) {
   const app = Fastify({
@@ -74,6 +78,7 @@ export function buildApp({
 
   app.addSchema(openapiComponentsSchema)
   registerErrorHandler(app)
+  registerFrontend(app, staticDir)
 
   app.get('/api/health', () => ({ status: 'ok' }))
 

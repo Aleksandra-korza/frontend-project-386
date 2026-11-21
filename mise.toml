@@ -56,6 +56,19 @@ raw = true
 description = "Собрать backend и frontend"
 run = "pnpm build"
 
+[tasks.docker-build]
+description = "Собрать production-образ calendar-calls (Dockerfile; docs/specs/deploy.md §3)"
+run = "docker build -t calendar-calls ."
+
+[tasks.docker-run]
+description = "Запустить образ calendar-calls: http://localhost:4000 (API и frontend); Ctrl+C — остановить"
+run = "docker run --rm --init -p 4000:4000 calendar-calls"
+raw = true
+
+[tasks.docker-smoke]
+description = "Собрать образ и проверить контейнеры (PORT по умолчанию и PORT=10000): /api/health, /, /book и содержимое образа"
+run = "bash scripts/docker-smoke.sh"
+
 [tasks.codegen]
 description = "TypeSpec (api/) → OpenAPI (api/generated) → SDK frontend (apps/frontend/src/client) и типы backend (apps/backend/src/generated)"
 run = [
